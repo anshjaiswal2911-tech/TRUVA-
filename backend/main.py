@@ -621,38 +621,39 @@ def extract_json(response_text: str) -> Dict[str, Any]:
 
 
 # Comprehensive Indian FMCG Brand and Commodity Lexicon
+# Comprehensive FMCG Lexicon for High-Confidence Extraction
 KNOWN_BRANDS = [
-    "TATA", "TATA SALT", "TATA SAMPANN", "TATA TEA", "MAGGI", "NESTLE", "NESCAFE", "KITKAT", "MUNCH",
-    "BRITANNIA", "GOOD DAY", "MARIE GOLD", "BOURBON", "50-50", "NUTRICEICE", "TREAT", "MILANO",
-    "PARLE", "PARLE-G", "MONACO", "KRACKJACK", "HIDE & SEEK", "FROOTI", "APPY", "APPY FIZZ",
-    "AMUL", "AMUL BUTTER", "AMUL MILK", "AMUL CHEESE", "AMULYA", "MOTHER DAIRY", "GIR DAIRY",
-    "HALDIRAM'S", "HALDIRAM", "BIKAJI", "BIKANERVALA", "BALAJI", "BALAJI WAFERS",
-    "DABUR", "REAL", "REAL FRUIT POWER", "CHYAWANPRASH", "HAJMOLA", "HONITUS", "DABUR RED",
-    "COLGATE", "MAXFRESH", "VEDSHAKTI", "TOTAL", "PEPSODENT", "CLOSEUP", "SENSODYNE", "ORAL-B", "MESWAK",
+    "TATA", "TATA SALT", "TATA SAMPANN", "TATA TEA", "MAGGI", "NESTLE", "NESCAFE", "KITKAT", "MUNCH", "MILKYBAR",
+    "BRITANNIA", "GOOD DAY", "MARIE GOLD", "BOURBON", "50-50", "NUTRICEICE", "TREAT", "MILANO", "JIM JAM", "LITTLE HEARTS",
+    "PARLE", "PARLE-G", "MONACO", "KRACKJACK", "HIDE & SEEK", "FROOTI", "APPY", "APPY FIZZ", "20-20",
+    "AMUL", "AMUL BUTTER", "AMUL MILK", "AMUL CHEESE", "AMULYA", "MOTHER DAIRY", "GIR DAIRY", "NANDINI", "SARAS", "VERKA", "AAVIN", "MILKMAID",
+    "HALDIRAM'S", "HALDIRAM", "BIKAJI", "BIKANERVALA", "BALAJI", "BALAJI WAFERS", "BALAJI CRUNCHEX",
+    "DABUR", "REAL", "REAL FRUIT POWER", "CHYAWANPRASH", "HAJMOLA", "HONITUS", "DABUR RED", "DABUR HONEY", "DABUR AMLA",
+    "COLGATE", "MAXFRESH", "VEDSHAKTI", "TOTAL", "PEPSODENT", "CLOSEUP", "SENSODYNE", "ORAL-B", "MESWAK", "VICCO",
     "DETTOL", "SAVLON", "LIFEBUOY", "LUX", "PEARS", "DOVE", "SANTOOR", "MEDIMIX", "CINTHOL", "GODREJ NO 1", "FIAMA", "MYSORE SANDAL",
-    "CADBURY", "DAIRY MILK", "5 STAR", "PERK", "GEMS", "BOURNVITA", "HORLICKS", "COMPLAN",
-    "ITC", "SUNFEAST", "DARK FANTASY", "AASHIRVAAD", "AASHIRVAAD ATTA", "B NATURAL", "BINGO", "YIPPEE",
+    "CADBURY", "DAIRY MILK", "5 STAR", "PERK", "GEMS", "BOURNVITA", "HORLICKS", "COMPLAN", "OREO", "BOOST",
+    "ITC", "SUNFEAST", "DARK FANTASY", "AASHIRVAAD", "AASHIRVAAD ATTA", "B NATURAL", "BINGO", "YIPPEE", "MOM'S MAGIC",
     "SURF EXCEL", "ARIEL", "TIDE", "RIN", "GHADI", "WHEEL", "NIRMA", "HENKO", "VIM", "PRIL", "EXO", "COLIN", "HARPIC", "LIZOL",
-    "FORTUNE", "SAFFOLA", "DHARA", "EMAMI", "NATURE FRESH", "SUNDROP", "GEMINI OIL", "ANNAPURNA",
-    "THUMS UP", "COCA-COLA", "COKE", "SPRITE", "FANTA", "LIMCA", "MAAZA", "PEPSI", "7UP", "MIRINDA", "MOUNTAIN DEW",
-    "LAY'S", "LAYS", "KURKURE", "DORITOS", "UNCLE CHIPPS", "PRINGLES", "CHINGS", "SMITH & JONES", "KNORR",
-    "EVEREST", "MDH", "CATCH", "BADSHAH", "EASTERN", "RAMDEV", "GOLDIE", "RAJESH MASALA",
-    "HIMALAYA", "NIVEA", "PONDS", "POND'S", "GLOW & LOVELY", "FAIR & LOVELY", "VASELINE", "BOROPLUS", "BOROLINE",
-    "PARACHUTE", "BAJAJ ALMOND DROPS", "DABUR AMLA", "NAV RATNA", "CLINIC PLUS", "SUNSILK", "HEAD & SHOULDERS", "PANTENE", "TRESEMME", "L'OREAL",
+    "FORTUNE", "SAFFOLA", "DHARA", "EMAMI", "NATURE FRESH", "SUNDROP", "GEMINI OIL", "ANNAPURNA", "DALDA", "ENGINE",
+    "THUMS UP", "COCA-COLA", "COKE", "SPRITE", "FANTA", "LIMCA", "MAAZA", "PEPSI", "7UP", "MIRINDA", "MOUNTAIN DEW", "STING", "RED BULL",
+    "LAY'S", "LAYS", "KURKURE", "DORITOS", "UNCLE CHIPPS", "PRINGLES", "CHINGS", "CHING'S SECRET", "SMITH & JONES", "KNORR",
+    "EVEREST", "MDH", "CATCH", "BADSHAH", "EASTERN", "RAMDEV", "GOLDIE", "RAJESH MASALA", "SUHANA", "MTR",
+    "HIMALAYA", "NIVEA", "PONDS", "POND'S", "GLOW & LOVELY", "FAIR & LOVELY", "VASELINE", "BOROPLUS", "BOROLINE", "BIOTIQUE",
+    "PARACHUTE", "BAJAJ ALMOND DROPS", "NAV RATNA", "CLINIC PLUS", "SUNSILK", "HEAD & SHOULDERS", "PANTENE", "TRESEMME", "L'OREAL", "GARNIER",
     "PATANJALI", "DANT KANTI", "KESH KANTI", "BISLERI", "KINLEY", "AQUAFINA", "BAILLEY", "PAPER BOAT", "RAW PRESSERY",
-    "KELLOGG'S", "CHOCOS", "QUAKER", "MTR", "CHITALE", "WARANA", "NANDINI", "SARAS", "VERKA", "AAVIN", "MILKMAID"
+    "KELLOGG'S", "CHOCOS", "QUAKER", "CHITALE", "WARANA", "HERSHEY'S", "NUTELLA", "KRAFT", "HEINZ", "KISSAN"
 ]
 
 COMMODITY_TYPES = [
     "SALT", "IODIZED SALT", "VACUUM EVAPORATED IODIZED SALT", "NOODLES", "INSTANT NOODLES", "ATTA", "CHAKKI FRESH ATTA",
-    "WHOLE WHEAT FLOUR", "WHEAT FLOUR", "MAIDA", "BESAN", "SUJI", "RAVA", "RICE", "BASMATI RICE",
+    "WHOLE WHEAT FLOUR", "WHEAT FLOUR", "MAIDA", "BESAN", "SUJI", "RAVA", "RICE", "BASMATI RICE", "POHA", "DAL",
     "REFINED OIL", "MUSTARD OIL", "SUNFLOWER OIL", "SOYABEAN OIL", "GROUNDNUT OIL", "DESI GHEE", "COW GHEE", "GHEE",
     "BUTTER", "PASTEURIZED BUTTER", "MILK", "TONED MILK", "FULL CREAM MILK", "CURD", "DAHI", "PANEER", "CHEESE",
-    "TEA", "CTC TEA", "GREEN TEA", "COFFEE", "INSTANT COFFEE", "MANGO DRINK", "FRUIT JUICE", "CARBONATED BEVERAGE",
+    "TEA", "CTC TEA", "GREEN TEA", "COFFEE", "INSTANT COFFEE", "MANGO DRINK", "FRUIT JUICE", "CARBONATED BEVERAGE", "SOFT DRINK",
     "POTATO CHIPS", "POTATO WAFERS", "WAFERS", "CHIPS", "CRUNCHEX", "NAVRATAN MIX", "NAVRATAN", "MIXTURE", "FARSAN", "CHIVDA", "NAMKEEN", "BHUJIA", "SEV", "ALOO BHUJIA", "MOONG DAL", "CHANACHUR", "KHAKHRA",
-    "BISCUITS", "COOKIES", "CREAM BISCUITS", "RUSK",
-    "TOOTHPASTE", "BATH SOAP", "TOILET SOAP", "HANDWASH", "SHAMPOO", "HAIR OIL", "DETERGENT POWDER", "DETERGENT BAR",
-    "DISHWASH BAR", "DISHWASH LIQUID", "FLOOR CLEANER", "TOILET CLEANER", "MOSQUITO REPELLENT"
+    "BISCUITS", "COOKIES", "CREAM BISCUITS", "RUSK", "CHOCOLATE", "CAKE",
+    "TOOTHPASTE", "BATH SOAP", "TOILET SOAP", "HANDWASH", "SHAMPOO", "HAIR OIL", "FACE WASH", "CREAM", "LOTION", "BODY WASH",
+    "DETERGENT POWDER", "DETERGENT BAR", "DISHWASH BAR", "DISHWASH LIQUID", "FLOOR CLEANER", "TOILET CLEANER", "MOSQUITO REPELLENT"
 ]
 
 NOISE_WORDS = {
@@ -685,11 +686,100 @@ def clean_packaging_ocr_token(t: str) -> str:
     return t
 
 
+def classify_product_domain(full_text: str, product_name: str) -> str:
+    """Classifies packaging into standard Legal Metrology commodity categories."""
+    p_lower = product_name.lower()
+    t = f"{full_text} {product_name}".lower()
+    
+    if any(k in p_lower or k in t for k in ["noodle", "noodles", "maggi", "yippee", "pasta", "macaroni", "vermicelli"]):
+        return "Staples & Grocery Essentials"
+    if any(k in p_lower for k in ["juice", "drink", "beverage", "soda", "cola", "sprite", "thums", "pepsi", "water", "tea", "coffee", "syrup", "squash"]) or any(k in t for k in ["carbonated beverage", "fruit juice", "soft drink", "packaged drinking water", "mineral water"]):
+        return "Beverages & Refreshments"
+    if any(k in p_lower or k in t for k in ["chips", "wafers", "biscuit", "cookie", "rusk", "namkeen", "snack", "bhujia", "sev", "chocolate", "candy", "cracker", "popcorn", "crisps", "crunchex", "navratan"]):
+        return "Packaged Snacks & Confectionery"
+    if any(k in p_lower or k in t for k in ["oil", "atta", "flour", "rice", "salt", "sugar", "ghee", "masala", "spice", "dal", "pulse", "wheat", "poha", "besan", "suji", "maida"]):
+        return "Staples & Grocery Essentials"
+    if any(k in p_lower or k in t for k in ["milk", "butter", "cheese", "paneer", "dahi", "curd", "yogurt", "cream", "lassi"]):
+        return "Dairy & Fresh Foods"
+    if any(k in p_lower or k in t for k in ["soap", "shampoo", "toothpaste", "lotion", "cream", "facewash", "face wash", "bodywash", "conditioner", "perfume", "deodorant", "hair oil", "skin"]):
+        return "Personal Care & Hygiene"
+    if any(k in p_lower or k in t for k in ["detergent", "cleaner", "dishwash", "bar", "liquid", "floor cleaner", "toilet cleaner", "repellent"]):
+        return "Household & Fabric Care"
+    return "Packaged Consumer Commodity"
+
+
+def compute_visual_saliency_title(ocr_items: List[Dict[str, Any]]) -> Tuple[str, str, List[int]]:
+    """
+    State-of-the-Art Visual Layout & Spatial Saliency Engine.
+    Identifies the brand name and primary product title from physical packaging bounding boxes
+    based on font height, area, confidence, and spatial positioning.
+    Works for ANY product in the world without requiring a pre-existing dictionary.
+    """
+    if not ocr_items:
+        return "Pre-Packaged Commodity", "Consumer Commodity", []
+
+    # Filter out pure noise / stat headers / numbers
+    candidates = []
+    max_img_y = max((it.get("center_y", 500.0) for it in ocr_items), default=1000.0)
+
+    for idx, item in enumerate(ocr_items):
+        txt = (item.get("text") or "").strip()
+        if not txt or len(txt) < 2:
+            continue
+        # Skip pure digits, barcodes, statutory banners
+        if re.search(r'^(?:NUTRITION|INGREDIENT|BATCH|EXPIRY|MFD|PKD|MRP|FSSAI|CUSTOMER|BARCODE|LIC|\d{8,14})$', txt, re.I):
+            continue
+        if re.search(r'^(?:RS|INR|WEIGHT|NET|WT|DATE|BEST|USE)\b', txt, re.I):
+            continue
+
+        bbox = item.get("bbox", [0, 0, 10, 10])
+        w = max(1.0, float(bbox[2] - bbox[0]))
+        h = max(1.0, float(bbox[3] - bbox[1]))
+        cy = float(item.get("center_y", (bbox[1] + bbox[3]) / 2.0))
+        conf = float(item.get("confidence", 0.9))
+
+        # Positional weighting: top 50% of the display panel gets peak prominence
+        pos_weight = 2.0 if cy < (max_img_y * 0.50) else (1.2 if cy < (max_img_y * 0.75) else 0.5)
+        # Average character width (captures bold stylized titles)
+        char_w = w / max(1, len(txt))
+        score = (h ** 1.35) * (char_w ** 0.5) * conf * pos_weight
+
+        candidates.append({
+            "score": score,
+            "index": idx,
+            "text": txt,
+            "item": item,
+            "h": h,
+            "cy": cy
+        })
+
+    if not candidates:
+        return ocr_items[0].get("text", "Pre-Packaged Commodity"), "Consumer Commodity", [0]
+
+    candidates.sort(key=lambda x: x["score"], reverse=True)
+    top_candidate = candidates[0]
+    top_text = top_candidate["text"]
+    selected_indices = [top_candidate["index"]]
+
+    # Check for adjacent title token on same or next horizontal row
+    second_title = ""
+    for c in candidates[1:4]:
+        if abs(c["cy"] - top_candidate["cy"]) < (top_candidate["h"] * 1.8) and c["index"] not in selected_indices:
+            second_title = c["text"]
+            selected_indices.append(c["index"])
+            break
+
+    full_title = f"{top_text} {second_title}".strip() if second_title else top_text
+    brand_word = top_text.split()[0] if top_text else "Consumer Commodity"
+
+    return full_title, brand_word, selected_indices
+
+
 def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     State-of-the-Art Legal Metrology & Packaged Commodities Extraction Engine.
-    Combines 2D spatial horizontal line clustering, OCR typo normalization,
-    and multi-pass statutory declaration extraction.
+    Combines 2D spatial horizontal line clustering, visual layout saliency analysis,
+    OCR typo normalization, and multi-pass statutory declaration extraction.
     """
     if not ocr_items:
         ocr_items = []
@@ -740,8 +830,6 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
     brand_indices = []
     detected_commodity = None
     commodity_indices = []
-    product_name = "Pre-Packaged Commodity"
-    name_indices = []
     
     # Pass A: Look for known FMCG brands in OCR tokens
     for idx, item in enumerate(ocr_items):
@@ -763,7 +851,9 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
                     detected_commodity = comm.title()
                     commodity_indices = [idx]
 
-    # Priority Product Detection Rules for Common Indian Commodities
+    # Pass C: Visual Saliency Layout Analysis (for ANY arbitrary product)
+    saliency_title, saliency_brand, saliency_indices = compute_visual_saliency_title(ocr_items)
+
     t_full_upper = full_text.upper()
     if "SPRITE" in t_full_upper:
         detected_brand = "Sprite"
@@ -838,17 +928,12 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
             product_name = f"{detected_brand} {detected_commodity}"
             name_indices = list(set(brand_indices + commodity_indices))
     elif detected_brand:
-        second_token = ""
-        for idx in range(min(4, num_items)):
-            if idx not in brand_indices:
-                cand = ocr_items[idx].get("text", "").strip()
-                if cand and not re.search(r'(?:MRP|Rs|NET|QTY|WT|MFD|EXP|PKD|BATCH|FSSAI|\d{4,})', cand, re.IGNORECASE):
-                    second_token = cand
-                    name_indices = list(set(brand_indices + [idx]))
-                    break
-        product_name = f"{detected_brand} {second_token}".strip() if second_token else detected_brand
-        if not name_indices:
-            name_indices = list(brand_indices)
+        product_name = f"{detected_brand} {saliency_title}" if detected_brand.lower() not in saliency_title.lower() else saliency_title
+        name_indices = list(set(brand_indices + saliency_indices))
+    elif saliency_title and saliency_title != "Pre-Packaged Commodity":
+        product_name = saliency_title
+        detected_brand = saliency_brand
+        name_indices = saliency_indices
     elif num_items > 0:
         first_clean = ""
         for it in ocr_items:
@@ -865,6 +950,9 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
         detected_brand = "Consumer Commodity"
         name_indices = []
         brand_indices = []
+
+    # Determine dynamic Legal Metrology category
+    detected_category = classify_product_domain(full_text, product_name)
 
     # -------------------------------------------------------------
     # 2. MAXIMUM RETAIL PRICE (MRP) DETECTION
@@ -945,7 +1033,7 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
     # -------------------------------------------------------------
     # 4. NET QUANTITY / WEIGHT / VOLUME DETECTION
     # -------------------------------------------------------------
-    default_unit = "ml" if any(k in (detected_brand or "").lower() or k in (detected_commodity or "").lower() for k in ["sprite", "coca", "coke", "thums", "pepsi", "drink", "juice", "beverage", "oil"]) else "g"
+    default_unit = "ml" if "Beverage" in detected_category or "Drink" in detected_category or any(k in (detected_brand or "").lower() for k in ["sprite", "coca", "coke", "thums", "pepsi", "juice", "oil"]) else "g"
     qty_data = {"raw_text": None, "value": None, "unit": default_unit, "confidence": 0.0, "source_indices": []}
     
     # Check on merged rows
@@ -965,7 +1053,7 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
             except ValueError:
                 pass
 
-    # Check standalone quantity tokens (e.g. "1.25 L", "750 ml", "30 g", "500 g")
+    # Check standalone quantity tokens (e.g. "1.25 L", "750 ml", "30 g", "500 g", "1 kg")
     if qty_data["value"] is None:
         for idx, item in enumerate(ocr_items):
             t = item.get("text", "").strip()
@@ -986,10 +1074,10 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
                 except ValueError:
                     pass
 
-    # Secondary check in nutritional per serving (e.g., SERVING SIZE: 30g)
+    # Secondary check in nutritional per serving (e.g., SERVING SIZE: 30g, PER 30g)
     if qty_data["value"] is None:
         for row_str in merged_row_texts:
-            m = re.search(r'(?:SERVING\s*SIZE|PER)[^\d]*([0-9]+(?:\.[0-9]+)?)\s*(g|gm|ml)', row_str, re.IGNORECASE)
+            m = re.search(r'(?:SERVING\s*SIZE|PER\s*SERVING|PER)[^\d]*([0-9]+(?:\.[0-9]+)?)\s*(g|gm|ml)', row_str, re.IGNORECASE)
             if m:
                 try:
                     raw_u = m.group(2).lower().replace("gm", "g")
@@ -1209,8 +1297,8 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
         "schema_version": "2.0",
         "product": {
             "name": {"raw_text": product_name, "normalized_text": product_name, "confidence": 0.95, "source_indices": name_indices},
-            "brand": {"raw_text": detected_brand, "normalized_text": detected_brand, "confidence": 0.95, "source_indices": brand_indices},
-            "category": {"raw_text": "Packaged Commodity", "normalized_text": "Packaged Commodity", "confidence": 0.90, "source_indices": []},
+            "brand": {"raw_text": detected_brand or "Consumer Commodity", "normalized_text": detected_brand or "Consumer Commodity", "confidence": 0.95, "source_indices": brand_indices},
+            "category": {"raw_text": detected_category, "normalized_text": detected_category, "confidence": 0.90, "source_indices": []},
             "common_name": {"raw_text": product_name, "normalized_text": product_name, "confidence": 0.90, "source_indices": name_indices}
         },
         "packaging": {
@@ -1227,7 +1315,7 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
             "packing_date": pkg_date_data,
             "import_date": empty_date_field(),
             "expiry_date": exp_date_data,
-            "use_by": exp_date_data if exp_date_data["value" if "value" in exp_date_data else "normalized_date"] else empty_date_field(),
+            "use_by": exp_date_data if exp_date_data.get("normalized_date") else empty_date_field(),
             "best_before": best_before_data
         },
         "entities": {
