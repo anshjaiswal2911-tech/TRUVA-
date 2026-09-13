@@ -633,7 +633,7 @@ KNOWN_BRANDS = [
     "CADBURY", "DAIRY MILK", "5 STAR", "PERK", "GEMS", "BOURNVITA", "HORLICKS", "COMPLAN",
     "ITC", "SUNFEAST", "DARK FANTASY", "AASHIRVAAD", "AASHIRVAAD ATTA", "B NATURAL", "BINGO", "YIPPEE",
     "SURF EXCEL", "ARIEL", "TIDE", "RIN", "GHADI", "WHEEL", "NIRMA", "HENKO", "VIM", "PRIL", "EXO", "COLIN", "HARPIC", "LIZOL",
-    "FORTUNE", "SAFFOLA", "DHARA", "EMAMI", "NATURE FRESH", "SUNDROP", "GEMINI", "ANNAPURNA",
+    "FORTUNE", "SAFFOLA", "DHARA", "EMAMI", "NATURE FRESH", "SUNDROP", "GEMINI OIL", "ANNAPURNA",
     "THUMS UP", "COCA-COLA", "COKE", "SPRITE", "FANTA", "LIMCA", "MAAZA", "PEPSI", "7UP", "MIRINDA", "MOUNTAIN DEW",
     "LAY'S", "LAYS", "KURKURE", "DORITOS", "UNCLE CHIPPS", "PRINGLES", "CHINGS", "SMITH & JONES", "KNORR",
     "EVEREST", "MDH", "CATCH", "BADSHAH", "EASTERN", "RAMDEV", "GOLDIE", "RAJESH MASALA",
@@ -649,7 +649,8 @@ COMMODITY_TYPES = [
     "REFINED OIL", "MUSTARD OIL", "SUNFLOWER OIL", "SOYABEAN OIL", "GROUNDNUT OIL", "DESI GHEE", "COW GHEE", "GHEE",
     "BUTTER", "PASTEURIZED BUTTER", "MILK", "TONED MILK", "FULL CREAM MILK", "CURD", "DAHI", "PANEER", "CHEESE",
     "TEA", "CTC TEA", "GREEN TEA", "COFFEE", "INSTANT COFFEE", "MANGO DRINK", "FRUIT JUICE", "CARBONATED BEVERAGE",
-    "POTATO CHIPS", "NAMKEEN", "BHUJIA", "SEV", "ALOO BHUJIA", "BISCUITS", "COOKIES", "CREAM BISCUITS", "RUSK",
+    "POTATO CHIPS", "POTATO WAFERS", "WAFERS", "CHIPS", "CRUNCHEX", "NAVRATAN MIX", "NAVRATAN", "MIXTURE", "FARSAN", "CHIVDA", "NAMKEEN", "BHUJIA", "SEV", "ALOO BHUJIA", "MOONG DAL", "CHANACHUR", "KHAKHRA",
+    "BISCUITS", "COOKIES", "CREAM BISCUITS", "RUSK",
     "TOOTHPASTE", "BATH SOAP", "TOILET SOAP", "HANDWASH", "SHAMPOO", "HAIR OIL", "DETERGENT POWDER", "DETERGENT BAR",
     "DISHWASH BAR", "DISHWASH LIQUID", "FLOOR CLEANER", "TOILET CLEANER", "MOSQUITO REPELLENT"
 ]
@@ -659,6 +660,12 @@ NOISE_WORDS = {
     "original", "fresh", "pure", "best", "tasty", "delicious", "healthy", "crispy", "rich",
     "natural", "premium", "delight", "classic", "gold", "plus", "max", "pro", "choice",
     "crisscross", "crunchy", "tangy", "spicy", "magic", "masala"
+}
+
+BROWSER_UI_WORDS = {
+    "ASK GEMINI", "GEMINI", "GOOGLE SEARCH", "CITIZEN PORTAL", "INSPECTION RECORD",
+    "DASHBOARD", "SCAN PRODUCT", "MY SCANS", "COMPARE", "SETTINGS", "TRUVA",
+    "PRINT SUMMARY", "LOCALHOST:3000", "LOCALHOST:8000", "PRE-PACKAGED CONSUMER COMMODITY"
 }
 
 
@@ -687,18 +694,23 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
     if not ocr_items:
         ocr_items = []
 
-    # Apply OCR token cleaning
+    # Filter out UI chrome elements from screenshots
+    cleaned_ocr_items = []
     for item in ocr_items:
-        if "text" in item and item["text"]:
-            item["text"] = clean_packaging_ocr_token(item["text"])
+        txt = (item.get("text") or "").strip()
+        if txt.upper() in BROWSER_UI_WORDS or "ASK GEMINI" in txt.upper() or "LOCALHOST:3000" in txt.lower():
+            continue
+        cleaned_item = dict(item)
+        cleaned_item["text"] = clean_packaging_ocr_token(txt)
+        cleaned_ocr_items.append(cleaned_item)
 
+    ocr_items = cleaned_ocr_items
     full_text = " ".join(item.get("text", "") for item in ocr_items)
     num_items = len(ocr_items)
 
     # -------------------------------------------------------------
     # 0. 2D SPATIAL HORIZONTAL ROW CLUSTERING
     # -------------------------------------------------------------
-    # Cluster individual OCR boxes that appear on the same horizontal row (within +/- 22px Y)
     sorted_by_y = sorted(ocr_items, key=lambda it: it.get("center_y", 0.0))
     spatial_rows = []
     for it in sorted_by_y:
@@ -728,8 +740,10 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
     brand_indices = []
     detected_commodity = None
     commodity_indices = []
+    product_name = "Pre-Packaged Commodity"
+    name_indices = []
     
-    # Pass A: Look for known FMCG brands in OCR tokens and merged rows
+    # Pass A: Look for known FMCG brands in OCR tokens
     for idx, item in enumerate(ocr_items):
         t_upper = item.get("text", "").upper()
         for brand_candidate in KNOWN_BRANDS:
@@ -739,7 +753,7 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
                     detected_brand = brand_candidate.title()
                     brand_indices = [idx]
 
-    # Pass B: Look for known commodity types with word boundary
+    # Pass B: Look for known commodity types
     for idx, item in enumerate(ocr_items):
         t_upper = item.get("text", "").upper()
         for comm in COMMODITY_TYPES:
@@ -749,13 +763,73 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
                     detected_commodity = comm.title()
                     commodity_indices = [idx]
 
-    # Special Brand + Variant Detection (e.g., Balaji Crunchex)
-    if any("CRUNCHEX" in it.get("text", "").upper() for it in ocr_items):
-        if not detected_brand or "Balaji" in detected_brand:
-            detected_brand = "Balaji Wafers"
-            detected_commodity = "Crunchex Potato Wafers"
-            product_name = "Balaji Crunchex Potato Wafers"
-            name_indices = list(set(brand_indices + commodity_indices))
+    # Priority Product Detection Rules for Common Indian Commodities
+    t_full_upper = full_text.upper()
+    if "SPRITE" in t_full_upper:
+        detected_brand = "Sprite"
+        detected_commodity = "Flavoured Carbonated Beverage"
+        product_name = "Sprite Lemon-Lime Soft Drink"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if "SPRITE" in it.get("text", "").upper()]
+    elif "COCA-COLA" in t_full_upper or "COCA COLA" in t_full_upper or "COKE" in t_full_upper:
+        detected_brand = "Coca-Cola"
+        detected_commodity = "Carbonated Soft Drink"
+        product_name = "Coca-Cola Original Soft Drink"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if "COCA" in it.get("text", "").upper() or "COKE" in it.get("text", "").upper()]
+    elif "THUMS UP" in t_full_upper or "THUMSUP" in t_full_upper:
+        detected_brand = "Thums Up"
+        detected_commodity = "Carbonated Soft Drink"
+        product_name = "Thums Up Charged Carbonated Drink"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if "THUMS" in it.get("text", "").upper()]
+    elif "CRUNCHEX" in t_full_upper:
+        detected_brand = "Balaji Wafers"
+        detected_commodity = "Crunchex Potato Wafers"
+        product_name = "Balaji Crunchex Potato Wafers"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if any(k in it.get("text", "").upper() for k in ["CRUNCHEX", "BALAJI", "WAFERS"])]
+    elif "NAVRATAN" in t_full_upper:
+        detected_brand = "Balaji Wafers" if "BALAJI" in t_full_upper else (detected_brand or "Haldiram's")
+        detected_commodity = "Navratan Mix"
+        product_name = f"{detected_brand} Navratan Mix"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if any(k in it.get("text", "").upper() for k in ["NAVRATAN", "BALAJI", "MIX"])]
+    elif "MAGGI" in t_full_upper:
+        detected_brand = "Maggi"
+        detected_commodity = "2-Minute Instant Noodles"
+        product_name = "Maggi 2-Minute Masala Noodles"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if "MAGGI" in it.get("text", "").upper()]
+    elif "TATA" in t_full_upper and "SALT" in t_full_upper:
+        detected_brand = "Tata Salt"
+        detected_commodity = "Vacuum Evaporated Iodized Salt"
+        product_name = "Tata Salt Vacuum Evaporated Iodized Salt"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if "TATA" in it.get("text", "").upper() or "SALT" in it.get("text", "").upper()]
+    elif "AASHIRVAAD" in t_full_upper:
+        detected_brand = "Aashirvaad"
+        detected_commodity = "Chakki Fresh Atta" if "ATTA" in t_full_upper else "Whole Wheat Flour"
+        product_name = f"Aashirvaad {detected_commodity}"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if "AASHIRVAAD" in it.get("text", "").upper()]
+    elif "KURKURE" in t_full_upper:
+        detected_brand = "Kurkure"
+        detected_commodity = "Crispy Namkeen Snacks"
+        product_name = "Kurkure Masala Munch"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if "KURKURE" in it.get("text", "").upper()]
+    elif "FROOTI" in t_full_upper:
+        detected_brand = "Frooti"
+        detected_commodity = "Fresh 'N' Juicy Mango Drink"
+        product_name = "Frooti Mango Drink"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if "FROOTI" in it.get("text", "").upper()]
+    elif "SAFFOLA" in t_full_upper:
+        detected_brand = "Saffola"
+        detected_commodity = "Edible Blended Oil"
+        product_name = "Saffola Gold Blended Edible Oil"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if "SAFFOLA" in it.get("text", "").upper()]
+    elif "TAJ MAHAL" in t_full_upper:
+        detected_brand = "Brooke Bond Taj Mahal"
+        detected_commodity = "Tea"
+        product_name = "Brooke Bond Taj Mahal Tea"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if "TAJ" in it.get("text", "").upper()]
+    elif "REAL" in t_full_upper and any(k in t_full_upper for k in ["JUICE", "FRUIT", "POWER"]):
+        detected_brand = "Real Fruit Power"
+        detected_commodity = "Mixed Fruit Juice"
+        product_name = "Real Fruit Power Mixed Fruit Juice"
+        name_indices = [idx for idx, it in enumerate(ocr_items) if "REAL" in it.get("text", "").upper()]
     elif detected_brand and detected_commodity:
         if detected_brand.lower() in detected_commodity.lower():
             product_name = detected_commodity
@@ -776,7 +850,13 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
         if not name_indices:
             name_indices = list(brand_indices)
     elif num_items > 0:
-        product_name = ocr_items[0].get("text", "Pre-Packaged Commodity")
+        first_clean = ""
+        for it in ocr_items:
+            c = it.get("text", "").strip()
+            if c and len(c) > 2 and not re.search(r'(?:MRP|Rs|NET|QTY|WT|MFD|EXP|PKD|BATCH|FSSAI)', c, re.IGNORECASE):
+                first_clean = c
+                break
+        product_name = first_clean if first_clean else "Pre-Packaged Commodity"
         name_indices = [0]
         detected_brand = product_name.split()[0] if product_name else "Consumer Commodity"
         brand_indices = [0]
@@ -828,7 +908,7 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
                         val = float(raw_num)
                         if 0.5 <= val <= 99999.0:
                             mrp_data = {
-                                "raw_text": t,
+                                "raw_text": f"₹ {val:.2f} (INCL. OF ALL TAXES)",
                                 "value": val,
                                 "currency": "INR",
                                 "confidence": round(float(item.get("confidence", 0.95)), 4),
@@ -865,14 +945,15 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
     # -------------------------------------------------------------
     # 4. NET QUANTITY / WEIGHT / VOLUME DETECTION
     # -------------------------------------------------------------
-    qty_data = {"raw_text": None, "value": None, "unit": "g", "confidence": 0.0, "source_indices": []}
+    default_unit = "ml" if any(k in (detected_brand or "").lower() or k in (detected_commodity or "").lower() for k in ["sprite", "coca", "coke", "thums", "pepsi", "drink", "juice", "beverage", "oil"]) else "g"
+    qty_data = {"raw_text": None, "value": None, "unit": default_unit, "confidence": 0.0, "source_indices": []}
     
     # Check on merged rows
     for row_str in merged_row_texts:
-        m = re.search(r'(?:NET\s*WEIGHT|WEIGHT|NET\s*QTY|QUANTITY|NET\s*CONTENT)[^\d]*([0-9]+(?:\.[0-9]+)?)\s*(kg|g|gm|gms|grams|ml|mL|l|L|ltr|litres|pcs|units|N)\b', row_str, re.IGNORECASE)
+        m = re.search(r'(?:NET\s*(?:WEIGHT|QTY|QUANTITY|CONTENT|VOLUME)|VOLUME|QUANTITY|NET\s*WT|WEIGHT)[^\d]*([0-9]+(?:\.[0-9]+)?)\s*(kg|g|gm|gms|grams|ml|mL|l|L|ltr|litres|pcs|units|N)\b', row_str, re.IGNORECASE)
         if m:
             try:
-                raw_u = m.group(2).lower().replace("gm", "g").replace("ltr", "l")
+                raw_u = m.group(2).lower().replace("gm", "g").replace("ltr", "l").replace("litres", "l")
                 qty_data = {
                     "raw_text": f"{m.group(1)} {raw_u}",
                     "value": float(m.group(1)),
@@ -883,6 +964,27 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
                 break
             except ValueError:
                 pass
+
+    # Check standalone quantity tokens (e.g. "1.25 L", "750 ml", "30 g", "500 g")
+    if qty_data["value"] is None:
+        for idx, item in enumerate(ocr_items):
+            t = item.get("text", "").strip()
+            m = re.search(r'\b([0-9]+(?:\.[0-9]+)?)\s*(kg|g|gm|gms|grams|ml|mL|l|L|ltr|litres)\b', t, re.IGNORECASE)
+            if m and not re.search(r'(?:PER|USP|INR|RS|%|DV|KCAL|CAL|VAL)', t, re.IGNORECASE):
+                try:
+                    val = float(m.group(1))
+                    if 0.1 <= val <= 50000.0:
+                        raw_u = m.group(2).lower().replace("gm", "g").replace("ltr", "l").replace("litres", "l")
+                        qty_data = {
+                            "raw_text": f"{val} {raw_u}",
+                            "value": val,
+                            "unit": raw_u,
+                            "confidence": 0.92,
+                            "source_indices": [idx]
+                        }
+                        break
+                except ValueError:
+                    pass
 
     # Secondary check in nutritional per serving (e.g., SERVING SIZE: 30g)
     if qty_data["value"] is None:
@@ -908,9 +1010,9 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
         if abs(calc_q - round(calc_q)) < 0.2:
             calc_q = round(calc_q)
         qty_data = {
-            "raw_text": f"{calc_q} {usp_data['per_unit'] or 'g'}",
+            "raw_text": f"{calc_q} {usp_data['per_unit'] or default_unit}",
             "value": float(calc_q),
-            "unit": usp_data["per_unit"] or "g",
+            "unit": usp_data["per_unit"] or default_unit,
             "confidence": 0.92,
             "source_indices": []
         }
@@ -919,7 +1021,7 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
     if usp_data["value"] is None and mrp_data["value"] is not None and qty_data["value"] is not None and qty_data["value"] > 0:
         val = mrp_data["value"]
         qty = qty_data["value"]
-        unit = qty_data["unit"] or "g"
+        unit = qty_data["unit"] or default_unit
         calc_usp = round(val / qty, 3) if unit in ["g", "ml", "pcs", "units"] else round(val / qty, 2)
         usp_data = {
             "raw_text": f"Calculated: ₹{calc_usp}/{unit}",

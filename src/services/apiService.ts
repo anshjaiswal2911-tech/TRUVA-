@@ -2,7 +2,7 @@ import { Product, Verdict, DetailedModule, KeyFinding, ModuleStatus, OcrItem } f
 
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? 'https://truva.onrender.com' : '')
+  (import.meta.env.PROD ? 'https://truva.onrender.com' : 'http://localhost:8000')
 ).replace(/\/+$/, '');
 
 export interface InspectionApiResponse {
@@ -135,9 +135,12 @@ export function transformBackendResponseToProduct(
   const brand = getFieldText(fp.product?.brand);
   const category = getFieldText(fp.product?.category) || fp.category_specific?.domain || 'Packaged Goods';
   
-  const mrpVal = getFieldText(fp.packaging?.mrp);
-  const netQtyVal = fp.packaging?.net_quantity?.value
-    ? `${fp.packaging?.net_quantity?.value} ${fp.packaging?.net_quantity?.unit || ''}`.trim()
+  const mrpVal = fp.packaging?.mrp?.value !== undefined && fp.packaging?.mrp?.value !== null
+    ? `₹${Number(fp.packaging.mrp.value).toFixed(2)} (Incl. of all taxes)`
+    : fp.packaging?.mrp?.raw_text || getFieldText(fp.packaging?.mrp);
+
+  const netQtyVal = fp.packaging?.net_quantity?.value !== undefined && fp.packaging?.net_quantity?.value !== null
+    ? `${fp.packaging.net_quantity.value} ${fp.packaging.net_quantity.unit || 'g'}`.trim()
     : getFieldText(fp.packaging?.net_quantity);
 
   const mfgDateVal = getFieldText(fp.dates?.manufacturing_date) || getFieldText(fp.dates?.packing_date);

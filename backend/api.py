@@ -216,19 +216,16 @@ def inspect_product(
     and runs the memory-optimized ML pipeline under a thread lock.
     """
     upload_target = image or file
-    if not upload_target or not upload_target.filename:
+    if not upload_target:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="An image file is required."
         )
     image = upload_target
-
-    ext = Path(image.filename).suffix.lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported file format '{ext}'. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
-        )
+    raw_fname = image.filename or "uploaded_label.jpg"
+    ext = Path(raw_fname).suffix.lower() if Path(raw_fname).suffix else ".jpg"
+    if not ext or ext not in ALLOWED_EXTENSIONS:
+        ext = ".jpg"
 
     # Generate unique inspection ID and file path
     if not inspection_code:
