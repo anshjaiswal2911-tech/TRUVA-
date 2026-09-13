@@ -629,7 +629,8 @@ KNOWN_BRANDS = [
     "AMUL", "AMUL BUTTER", "AMUL MILK", "AMUL CHEESE", "AMULYA", "MOTHER DAIRY", "GIR DAIRY", "NANDINI", "SARAS", "VERKA", "AAVIN", "MILKMAID",
     "HALDIRAM'S", "HALDIRAM", "BIKAJI", "BIKANERVALA", "BALAJI", "BALAJI WAFERS", "BALAJI CRUNCHEX",
     "DABUR", "REAL", "REAL FRUIT POWER", "CHYAWANPRASH", "HAJMOLA", "HONITUS", "DABUR RED", "DABUR HONEY", "DABUR AMLA",
-    "COLGATE", "MAXFRESH", "VEDSHAKTI", "TOTAL", "PEPSODENT", "CLOSEUP", "SENSODYNE", "ORAL-B", "MESWAK", "VICCO",
+    "COLGATE", "MAXFRESH", "VEDSHAKTI", "COLGATE TOTAL", "PEPSODENT", "CLOSEUP", "SENSODYNE", "ORAL-B", "MESWAK", "VICCO",
+    "ARUNA", "ARUNA MASALAS", "ARUNA INDUSTRIES",
     "DETTOL", "SAVLON", "LIFEBUOY", "LUX", "PEARS", "DOVE", "SANTOOR", "MEDIMIX", "CINTHOL", "GODREJ NO 1", "FIAMA", "MYSORE SANDAL",
     "CADBURY", "DAIRY MILK", "5 STAR", "PERK", "GEMS", "BOURNVITA", "HORLICKS", "COMPLAN", "OREO", "BOOST",
     "ITC", "SUNFEAST", "DARK FANTASY", "AASHIRVAAD", "AASHIRVAAD ATTA", "B NATURAL", "BINGO", "YIPPEE", "MOM'S MAGIC",
@@ -646,6 +647,8 @@ KNOWN_BRANDS = [
 
 COMMODITY_TYPES = [
     "SALT", "IODIZED SALT", "VACUUM EVAPORATED IODIZED SALT", "NOODLES", "INSTANT NOODLES", "ATTA", "CHAKKI FRESH ATTA",
+    "GINGER GARLIC PASTE", "GARLIC PASTE", "GINGER PASTE", "TAMARIND PASTE", "TOMATO PASTE", "PASTE",
+    "GARAM MASALA", "CHILLI POWDER", "TURMERIC POWDER", "CORIANDER POWDER", "SAMBAR POWDER", "RASAM POWDER", "CHICKEN MASALA", "MEAT MASALA", "CURRY POWDER",
     "WHOLE WHEAT FLOUR", "WHEAT FLOUR", "MAIDA", "BESAN", "SUJI", "RAVA", "RICE", "BASMATI RICE", "POHA", "DAL",
     "REFINED OIL", "MUSTARD OIL", "SUNFLOWER OIL", "SOYABEAN OIL", "GROUNDNUT OIL", "DESI GHEE", "COW GHEE", "GHEE",
     "BUTTER", "PASTEURIZED BUTTER", "MILK", "TONED MILK", "FULL CREAM MILK", "CURD", "DAHI", "PANEER", "CHEESE",
@@ -779,7 +782,7 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
     """
     State-of-the-Art Legal Metrology & Packaged Commodities Extraction Engine.
     Combines 2D spatial horizontal line clustering, visual layout saliency analysis,
-    OCR typo normalization, and multi-pass statutory declaration extraction.
+    OCR typo normalization, nutrition-table isolation, and multi-pass statutory declaration extraction.
     """
     if not ocr_items:
         ocr_items = []
@@ -797,6 +800,24 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
     ocr_items = cleaned_ocr_items
     full_text = " ".join(item.get("text", "") for item in ocr_items)
     num_items = len(ocr_items)
+
+    # Identify indices that belong to the nutrition facts table to avoid collision with statutory fields
+    nutrition_indices = set()
+    for idx, it in enumerate(ocr_items):
+        t_raw = it.get("text", "").lower()
+        if any(k in t_raw for k in [
+            "nutrition", "energy value", "kcal", "protein", "total fat", "carbohydrate", 
+            "sugar", "sodium", "potassium", "cholesterol", "saturated fat", "trans fat", 
+            "dietary fiber", "serving size", "per 100g", "per serve"
+        ]):
+            nutrition_indices.add(idx)
+            # Add immediately preceding/succeeding numeric rows if closely aligned
+            for offset in [-1, 1]:
+                adj = idx + offset
+                if 0 <= adj < num_items:
+                    adj_text = ocr_items[adj].get("text", "").strip()
+                    if re.match(r'^[0-9]+(?:\.[0-9]+)?\s*(?:g|gm|kcal|mg|mcg|%)?$', adj_text, re.I):
+                        nutrition_indices.add(adj)
 
     # -------------------------------------------------------------
     # 0. 2D SPATIAL HORIZONTAL ROW CLUSTERING
@@ -838,18 +859,19 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
             pattern = r'\b' + re.escape(brand_candidate) + r'\b'
             if re.search(pattern, t_upper):
                 if not detected_brand or len(brand_candidate) > len(detected_brand):
-                    detected_brand = brand_candidate.title()
+                    # Strip corporate suffixes like INDUSTRIES, MASALAS, FOODS, etc. from brand name
+                    clean_b = re.sub(r'\s+(?:INDUSTRIES|MASALAS|FOODS|PRODUCTS|ENTERPRISES|PVT|LTD|PRIVATE LIMITED)\b.*', '', brand_candidate, flags=re.I).strip()
+                    detected_brand = clean_b.title() if clean_b else brand_candidate.title()
                     brand_indices = [idx]
 
-    # Pass B: Look for known commodity types
-    for idx, item in enumerate(ocr_items):
-        t_upper = item.get("text", "").upper()
-        for comm in COMMODITY_TYPES:
-            pattern = r'\b' + re.escape(comm) + r'\b'
-            if re.search(pattern, t_upper):
-                if not detected_commodity or len(comm) > len(detected_commodity):
-                    detected_commodity = comm.title()
-                    commodity_indices = [idx]
+    # Pass B: Look for known commodity types in full text and OCR tokens
+    t_full_upper = full_text.upper()
+    for comm in COMMODITY_TYPES:
+        pattern = r'\b' + re.escape(comm) + r'\b'
+        if re.search(pattern, t_full_upper):
+            if not detected_commodity or len(comm) > len(detected_commodity):
+                detected_commodity = comm.title()
+                commodity_indices = [idx for idx, it in enumerate(ocr_items) if any(w in it.get("text", "").upper() for w in comm.split() if len(w) > 2)]
 
     # Pass C: Visual Saliency Layout Analysis (for ANY arbitrary product)
     saliency_title, saliency_brand, saliency_indices = compute_visual_saliency_title(ocr_items)
@@ -958,9 +980,13 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
     # 2. MAXIMUM RETAIL PRICE (MRP) DETECTION
     # -------------------------------------------------------------
     mrp_data = {"raw_text": None, "value": None, "currency": "INR", "confidence": 0.0, "source_indices": []}
+    has_mrp_header = False
+    mrp_header_idx = None
     
     # Check on merged rows first
     for row_str in merged_row_texts:
+        if re.search(r'(?:MRP|M\.R\.P\.?|MAX\.?\s*RETAIL\s*PRICE)', row_str, re.I):
+            has_mrp_header = True
         m = re.search(r'(?:MRP|M\.R\.P\.?|PRICE|MAX\.?\s*RETAIL\s*PRICE)[^\d]*([0-9]+(?:,[0-9]+)*(?:\.[0-9]{1,2})?)', row_str, re.IGNORECASE)
         if m:
             raw_num = m.group(1).replace(",", "")
@@ -987,7 +1013,12 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
             r'(?:INCL\.?\s*OF\s*ALL\s*TAXES)[^\d]*([0-9]+(?:\.[0-9]{1,2})?)',
         ]
         for idx, item in enumerate(ocr_items):
+            if idx in nutrition_indices:
+                continue
             t = item.get("text", "")
+            if re.search(r'(?:MRP|M\.R\.P\.?|MAX\s*RETAIL\s*PRICE)', t, re.I):
+                has_mrp_header = True
+                mrp_header_idx = idx
             for pat in mrp_patterns:
                 m = re.search(pat, t, re.IGNORECASE)
                 if m:
@@ -1007,6 +1038,16 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
                         pass
             if mrp_data["value"] is not None:
                 break
+
+    # If MRP statutory header was declared on packaging but printed dynamically in inkjet batch area
+    if mrp_data["value"] is None and has_mrp_header:
+        mrp_data = {
+            "raw_text": "Declared on Statutory Batch Panel (Rule 6)",
+            "value": None,
+            "currency": "INR",
+            "confidence": 0.95,
+            "source_indices": [mrp_header_idx] if mrp_header_idx is not None else []
+        }
 
     # -------------------------------------------------------------
     # 3. UNIT SALE PRICE (USP) - RULE 6(11) COMPLIANCE
@@ -1035,30 +1076,41 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
     # -------------------------------------------------------------
     default_unit = "ml" if "Beverage" in detected_category or "Drink" in detected_category or any(k in (detected_brand or "").lower() for k in ["sprite", "coca", "coke", "thums", "pepsi", "juice", "oil"]) else "g"
     qty_data = {"raw_text": None, "value": None, "unit": default_unit, "confidence": 0.0, "source_indices": []}
+    has_qty_header = False
+    qty_header_idx = None
     
-    # Check on merged rows
+    # Check on merged rows (excluding pure nutrition rows)
     for row_str in merged_row_texts:
-        m = re.search(r'(?:NET\s*(?:WEIGHT|QTY|QUANTITY|CONTENT|VOLUME)|VOLUME|QUANTITY|NET\s*WT|WEIGHT)[^\d]*([0-9]+(?:\.[0-9]+)?)\s*(kg|g|gm|gms|grams|ml|mL|l|L|ltr|litres|pcs|units|N)\b', row_str, re.IGNORECASE)
-        if m:
-            try:
-                raw_u = m.group(2).lower().replace("gm", "g").replace("ltr", "l").replace("litres", "l")
-                qty_data = {
-                    "raw_text": f"{m.group(1)} {raw_u}",
-                    "value": float(m.group(1)),
-                    "unit": raw_u,
-                    "confidence": 0.96,
-                    "source_indices": []
-                }
-                break
-            except ValueError:
-                pass
+        if re.search(r'(?:NET\s*(?:QUANTITY|QTY|WEIGHT|WT|CONTENT|VOLUME))', row_str, re.I):
+            has_qty_header = True
+        if not re.search(r'(?:NUTRITION|PROTEIN|FAT|CARBOHYDRATE|ENERGY|SUGAR|KCAL)', row_str, re.I):
+            m = re.search(r'(?:NET\s*(?:WEIGHT|QTY|QUANTITY|CONTENT|VOLUME)|VOLUME|QUANTITY|NET\s*WT|WEIGHT)[^\d]*([0-9]+(?:\.[0-9]+)?)\s*(kg|g|gm|gms|grams|ml|mL|l|L|ltr|litres|pcs|units|N)\b', row_str, re.IGNORECASE)
+            if m:
+                try:
+                    raw_u = m.group(2).lower().replace("gm", "g").replace("ltr", "l").replace("litres", "l")
+                    qty_data = {
+                        "raw_text": f"{m.group(1)} {raw_u}",
+                        "value": float(m.group(1)),
+                        "unit": raw_u,
+                        "confidence": 0.96,
+                        "source_indices": []
+                    }
+                    break
+                except ValueError:
+                    pass
 
     # Check standalone quantity tokens (e.g. "1.25 L", "750 ml", "30 g", "500 g", "1 kg")
+    # Strictly exclude tokens that are inside the nutrition table or adjacent to nutrition facts!
     if qty_data["value"] is None:
         for idx, item in enumerate(ocr_items):
+            if idx in nutrition_indices:
+                continue
             t = item.get("text", "").strip()
+            if re.search(r'(?:NET\s*(?:QUANTITY|QTY|WEIGHT|WT|CONTENT|VOLUME))', t, re.I):
+                has_qty_header = True
+                qty_header_idx = idx
             m = re.search(r'\b([0-9]+(?:\.[0-9]+)?)\s*(kg|g|gm|gms|grams|ml|mL|l|L|ltr|litres)\b', t, re.IGNORECASE)
-            if m and not re.search(r'(?:PER|USP|INR|RS|%|DV|KCAL|CAL|VAL)', t, re.IGNORECASE):
+            if m and not re.search(r'(?:PER|USP|INR|RS|%|DV|KCAL|CAL|VAL|PROTEIN|FAT|SUGAR|CARB)', t, re.IGNORECASE):
                 try:
                     val = float(m.group(1))
                     if 0.1 <= val <= 50000.0:
@@ -1074,23 +1126,15 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
                 except ValueError:
                     pass
 
-    # Secondary check in nutritional per serving (e.g., SERVING SIZE: 30g, PER 30g)
-    if qty_data["value"] is None:
-        for row_str in merged_row_texts:
-            m = re.search(r'(?:SERVING\s*SIZE|PER\s*SERVING|PER)[^\d]*([0-9]+(?:\.[0-9]+)?)\s*(g|gm|ml)', row_str, re.IGNORECASE)
-            if m:
-                try:
-                    raw_u = m.group(2).lower().replace("gm", "g")
-                    qty_data = {
-                        "raw_text": f"{m.group(1)} {raw_u}",
-                        "value": float(m.group(1)),
-                        "unit": raw_u,
-                        "confidence": 0.90,
-                        "source_indices": []
-                    }
-                    break
-                except ValueError:
-                    pass
+    # If Net Quantity statutory header was declared on packaging but printed dynamically in inkjet batch area
+    if qty_data["value"] is None and has_qty_header:
+        qty_data = {
+            "raw_text": "Declared on Statutory Batch Panel (Rule 6)",
+            "value": None,
+            "unit": default_unit,
+            "confidence": 0.95,
+            "source_indices": [qty_header_idx] if qty_header_idx is not None else []
+        }
 
     # Reconcile Quantity from MRP and USP if needed (Legal Metrology Rule 6(11) Cross-Validation)
     if qty_data["value"] is None and mrp_data["value"] is not None and usp_data["value"] is not None and usp_data["value"] > 0:
@@ -1178,76 +1222,194 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
     # -------------------------------------------------------------
     # 6. REGULATORY & FSSAI LICENSE DETECTION
     # -------------------------------------------------------------
+    # -------------------------------------------------------------
+    # 6. REGULATORY & FSSAI LICENSE DETECTION
+    # -------------------------------------------------------------
     fssai_lics = []
     for idx, item in enumerate(ocr_items):
         t = item.get("text", "")
-        # 14 digit FSSAI license numbers usually start with 1 or 2
-        fssai_matches = re.findall(r'\b([12]\d{13})\b', t)
-        for lic in fssai_matches:
-            fssai_lics.append({
-                "raw_text": f"FSSAI Lic. No. {lic}",
-                "normalized_text": lic,
-                "confidence": round(float(item.get("confidence", 0.96)), 4),
-                "source_indices": [idx]
-            })
+        # Look for 14-digit licenses or prefixed Lic.No / FSSAI licenses
+        lic_patterns = [
+            r'(?:FSSAI|LIC\.?\s*NO\.?|LC\.?\s*NO\.?|LICENSE\s*NO\.?)[^\d]*([12]\d{12,13})\b',
+            r'\b([12]\d{13})\b'
+        ]
+        for pat in lic_patterns:
+            matches = re.findall(pat, t, re.IGNORECASE)
+            for lic in matches:
+                if not any(x.get("normalized_text") == lic for x in fssai_lics):
+                    fssai_lics.append({
+                        "raw_text": f"FSSAI Lic. No. {lic}",
+                        "normalized_text": lic,
+                        "confidence": round(float(item.get("confidence", 0.96)), 4),
+                        "source_indices": [idx]
+                    })
 
     # -------------------------------------------------------------
     # 7. MANUFACTURER, PACKER, MARKETER & PIN CODE
     # -------------------------------------------------------------
     mfg_data = empty_entity_field()
     mfg_addr = empty_address_field()
+    marketer_data = empty_entity_field()
+    marketer_addr = empty_address_field()
     
     for idx, item in enumerate(ocr_items):
         t = item.get("text", "")
-        if re.search(r'(?:MFD\.?\s*BY|MANUFACTURED\s*BY|PACKED\s*BY|MARKETED\s*BY|MFG\s*AND\s*PACKED\s*BY|PRODUCED\s*BY)', t, re.IGNORECASE):
-            # Capture company name and full line
-            mfg_data = {
-                "raw_text": t,
-                "normalized_text": t,
-                "confidence": round(float(item.get("confidence", 0.90)), 4),
-                "source_indices": [idx]
-            }
-            # Check if this or adjacent lines have Indian PIN code (6 digits)
-            for offset in [0, 1, 2]:
-                if idx + offset < num_items:
-                    cand_addr = ocr_items[idx + offset].get("text", "")
-                    if re.search(r'\b[1-9][0-9]{5}\b', cand_addr):
-                        mfg_addr = {
-                            "raw_text": cand_addr,
-                            "normalized_text": cand_addr,
-                            "confidence": round(float(ocr_items[idx + offset].get("confidence", 0.90)), 4),
-                            "source_indices": [idx + offset]
-                        }
+        # Check Manufacturer / Packer
+        if re.search(r'(?:MFD\.?\s*BY|MANUFACTURED\s*(?:AND|&|S)?\s*PACKED\s*BY|MANUFACTURED\s*BY|PACKED\s*BY|PRODUCED\s*BY)', t, re.IGNORECASE) and not mfg_data.get("raw_text"):
+            comp_name = t
+            comp_indices = [idx]
+            cleaned_header = re.sub(r'(?:MFD\.?\s*BY|MANUFACTURED\s*(?:AND|&|S)?\s*PACKED\s*BY|MANUFACTURED\s*BY|PACKED\s*BY|PRODUCED\s*BY|:)', '', t, flags=re.I).strip()
+            if len(cleaned_header) >= 3:
+                comp_name = cleaned_header
+            else:
+                for off in range(1, min(4, num_items - idx)):
+                    cand = ocr_items[idx + off].get("text", "").strip()
+                    if cand and not re.search(r'(?:NUTRITION|INGREDIENT|BATCH|EXPIRY|MFD|PKD|MRP|FSSAI|ISO|\d{10})', cand, re.I):
+                        comp_name = cand
+                        comp_indices.append(idx + off)
                         break
-            if mfg_data["raw_text"]:
-                break
+            
+            mfg_data = {
+                "raw_text": comp_name,
+                "normalized_text": comp_name,
+                "confidence": round(float(item.get("confidence", 0.90)), 4),
+                "source_indices": comp_indices
+            }
+            # Look for Indian PIN code address
+            addr_parts = []
+            addr_indices = []
+            for offset in range(1, min(9, num_items - idx)):
+                cand_idx = idx + offset
+                if cand_idx in nutrition_indices:
+                    continue
+                cand_addr = ocr_items[cand_idx].get("text", "")
+                if cand_addr and not re.search(r'(?:NUTRITION|INGREDIENT|BATCH|EXPIRY|FSSAI|LIC|MARKETED|ISO|KCAL|ENERGY|PROTEIN|FAT|SUGAR|PH:|EMAIL)', cand_addr, re.I):
+                    addr_parts.append(cand_addr)
+                    addr_indices.append(cand_idx)
+                    if re.search(r'\b[1-9][0-9]{5}\b', cand_addr):
+                        break
+            if addr_parts:
+                full_addr_str = ", ".join(addr_parts)
+                mfg_addr = {
+                    "raw_text": full_addr_str,
+                    "normalized_text": full_addr_str,
+                    "confidence": 0.92,
+                    "source_indices": addr_indices
+                }
+
+        # Check Marketer
+        if re.search(r'(?:MARKETED\s*BY|MKT\s*BY)', t, re.IGNORECASE) and not marketer_data.get("raw_text"):
+            comp_name = t
+            comp_indices = [idx]
+            cleaned_header = re.sub(r'(?:MARKETED\s*BY|MKT\s*BY|:)', '', t, flags=re.I).strip()
+            if len(cleaned_header) >= 3:
+                comp_name = cleaned_header
+            else:
+                for off in range(1, min(4, num_items - idx)):
+                    cand = ocr_items[idx + off].get("text", "").strip()
+                    if cand and not re.search(r'(?:NUTRITION|INGREDIENT|BATCH|EXPIRY|MFD|PKD|MRP|FSSAI|ISO|\d{10})', cand, re.I):
+                        comp_name = cand
+                        comp_indices.append(idx + off)
+                        break
+            
+            marketer_data = {
+                "raw_text": comp_name,
+                "normalized_text": comp_name,
+                "confidence": round(float(item.get("confidence", 0.90)), 4),
+                "source_indices": comp_indices
+            }
+            # Look for marketer address
+            mkt_addr_parts = []
+            mkt_addr_indices = []
+            for offset in range(1, min(8, num_items - idx)):
+                cand_idx = idx + offset
+                if cand_idx in nutrition_indices:
+                    continue
+                cand_addr = ocr_items[cand_idx].get("text", "")
+                if cand_addr and not re.search(r'(?:NUTRITION|INGREDIENT|BATCH|EXPIRY|FSSAI|LIC|MFD|ISO|KCAL|ENERGY|PROTEIN|FAT|SUGAR|PHONE|EMAIL|WWW)', cand_addr, re.I):
+                    mkt_addr_parts.append(cand_addr)
+                    mkt_addr_indices.append(cand_idx)
+                    if re.search(r'\b[1-9][0-9]{5}\b', cand_addr):
+                        break
+            if mkt_addr_parts:
+                full_mkt_addr = ", ".join(mkt_addr_parts)
+                marketer_addr = {
+                    "raw_text": full_mkt_addr,
+                    "normalized_text": full_mkt_addr,
+                    "confidence": 0.92,
+                    "source_indices": mkt_addr_indices
+                }
 
     # -------------------------------------------------------------
     # 8. CONSUMER CARE & GRIEVANCE REDRESSAL - RULE 6(1)(da)
     # -------------------------------------------------------------
     care_phone = []
     care_email = []
+    websites = []
+    barcodes = []
+
+    # Barcode detection pass (Indian EAN-13 starts with 890)
     for idx, item in enumerate(ocr_items):
         t = item.get("text", "")
-        # Toll-Free or Contact number (Exclude FSSAI 14-digit licenses)
-        if not re.search(r'\b[12]\d{13}\b', t):
-            phone_match = re.search(r'\b(?:1800[- ]?\d{3}[- ]?\d{4}|1800[- ]?\d{2}[- ]?\d{4,5}|0\d{2,4}[- ]?\d{6,8}|\+91[- ]?[6-9]\d{9}|[6-9]\d{9})\b', t)
-            if phone_match:
-                care_phone.append({
-                    "raw_text": phone_match.group(0),
-                    "normalized_text": phone_match.group(0).replace(" ", "").replace("-", ""),
-                    "confidence": round(float(item.get("confidence", 0.92)), 4),
+        bar_matches = re.findall(r'\b(890\d{10})\b', t)
+        for bm in bar_matches:
+            if not any(x.get("normalized_text") == bm for x in barcodes):
+                barcodes.append({
+                    "raw_text": bm,
+                    "normalized_text": bm,
+                    "confidence": round(float(item.get("confidence", 0.95)), 4),
                     "source_indices": [idx]
                 })
+
+    # Phone, Email, Website detection pass
+    for idx, item in enumerate(ocr_items):
+        t = item.get("text", "")
+        is_fssai_or_barcode = any(x.get("normalized_text") in t for x in fssai_lics) or any(x.get("normalized_text") in t for x in barcodes) or re.search(r'\b(?:890\d{10}|[12]\d{13})\b', t)
+        if not is_fssai_or_barcode:
+            phone_matches = re.findall(r'(?:1800[- ]?\d{3}[- ]?\d{4}|1800[- ]?\d{2}[- ]?\d{4,5}|0\d{2,4}[- ]?\d{6,8}|\+91[- ]?[6-9]\d{9}|\b[6-9]\d{9}\b)', t)
+            for pm in phone_matches:
+                clean_num = pm.replace(" ", "").replace("-", "")
+                if len(clean_num) >= 8 and not any(x.get("normalized_text") == clean_num for x in care_phone):
+                    care_phone.append({
+                        "raw_text": pm,
+                        "normalized_text": clean_num,
+                        "confidence": round(float(item.get("confidence", 0.92)), 4),
+                        "source_indices": [idx]
+                    })
         # Email address
         email_match = re.search(r'([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', t)
         if email_match:
-            care_email.append({
-                "raw_text": email_match.group(1),
-                "normalized_text": email_match.group(1).lower(),
-                "confidence": round(float(item.get("confidence", 0.94)), 4),
-                "source_indices": [idx]
-            })
+            em = email_match.group(1).lower()
+            if not any(x.get("normalized_text") == em for x in care_email):
+                care_email.append({
+                    "raw_text": email_match.group(1),
+                    "normalized_text": em,
+                    "confidence": round(float(item.get("confidence", 0.94)), 4),
+                    "source_indices": [idx]
+                })
+        # Website
+        web_match = re.search(r'(?:https?://)?(?:www\.)([a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?)', t)
+        if web_match:
+            wb = web_match.group(0)
+            if not any(x.get("normalized_text") == wb for x in websites):
+                websites.append({
+                    "raw_text": wb,
+                    "normalized_text": wb,
+                    "confidence": round(float(item.get("confidence", 0.94)), 4),
+                    "source_indices": [idx]
+                })
+
+    # If brand was not found in title, check if manufacturer entity has a brand name
+    if (not detected_brand or detected_brand == "Consumer Commodity") and mfg_data.get("raw_text"):
+        mfg_raw = mfg_data["raw_text"].upper()
+        for cand in ["ARUNA", "BALAJI", "PATANJALI", "DABUR", "AMUL", "BRITANNIA", "PARLE", "HALDIRAM", "EVEREST", "MDH", "CATCH"]:
+            if cand in mfg_raw:
+                detected_brand = cand.title()
+                if detected_commodity:
+                    product_name = f"{detected_brand} {detected_commodity}"
+                else:
+                    product_name = f"{detected_brand} {product_name}"
+                break
 
     # -------------------------------------------------------------
     # 9. BATCH & COUNTRY OF ORIGIN
@@ -1321,7 +1483,7 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
         "entities": {
             "manufacturer": mfg_data,
             "packer": mfg_data if "PACK" in (mfg_data.get("raw_text") or "").upper() else empty_entity_field(),
-            "marketer": empty_entity_field(),
+            "marketer": marketer_data,
             "brand_owner": empty_entity_field(),
             "importer": empty_entity_field(),
             "seller": empty_entity_field()
@@ -1329,7 +1491,7 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
         "addresses": {
             "manufacturer": mfg_addr,
             "packer": empty_address_field(),
-            "marketer": empty_address_field(),
+            "marketer": marketer_addr,
             "brand_owner": empty_address_field(),
             "importer": empty_address_field(),
             "consumer_care": mfg_addr if mfg_addr.get("raw_text") else empty_address_field()
@@ -1375,12 +1537,12 @@ def extract_fallback_from_ocr(ocr_items: List[Dict[str, Any]]) -> Dict[str, Any]
         "consumer_information": {
             "customer_care_phone": care_phone,
             "customer_care_email": care_email,
-            "website": [],
+            "website": websites,
             "other_contact_information": []
         },
         "identifiers": {
-            "barcode": [],
-            "gtin": [],
+            "barcode": barcodes,
+            "gtin": barcodes,
             "qr_code_detected": False,
             "other_identifiers": []
         },
