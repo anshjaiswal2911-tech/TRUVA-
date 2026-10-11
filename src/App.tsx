@@ -17,6 +17,7 @@ import { NotificationsView } from './components/NotificationsView';
 import { SettingsView } from './components/SettingsView';
 import { SystemStatesView } from './components/SystemStatesView';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LandingPage } from './components/LandingPage';
 import { AuthGateModal } from './components/AuthGateModal';
 
 type ViewMode = 'main' | 'processing' | 'result' | 'full_report' | 'evidence_detail';
@@ -26,10 +27,13 @@ function TruvaApp() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [showAuthModal, setShowAuthModal] = useState(false);
-
-  // In mobile app mode: always treat layout as mobile so all inner views render pure native mobile components
-  const isMobileAppLayout = true;
-  const [isMobileMode, setIsMobileMode] = useState<boolean>(true);
+  // Check if Mobile App mode is requested via URL (?app=true or ?view=mobile or #/mobile)
+  const [isMobileMode, setIsMobileMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    const hash = window.location.hash.toLowerCase();
+    return params.get('view') === 'mobile' || params.get('app') === 'true' || hash.includes('mobile') || hash.includes('app');
+  });
 
   const handleMobileLogout = async () => {
     await signOut();
@@ -49,7 +53,7 @@ function TruvaApp() {
     const handleUrlRoute = () => {
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash.toLowerCase();
-      const mobileReq = params.get('view') === 'mobile' || hash.includes('mobile');
+      const mobileReq = params.get('view') === 'mobile' || params.get('app') === 'true' || hash.includes('mobile') || hash.includes('app');
       setIsMobileMode(mobileReq);
     };
     handleUrlRoute();
@@ -198,57 +202,104 @@ function TruvaApp() {
     );
   }
 
-  // 1. Direct Authentication Screen (NO LANDING PAGE! Login page se sab shuru)
-  if (!isAuthenticated) {
-    if (isLargeScreen) {
+  // 1. MOBILE APP MODE (?view=mobile or ?app=true): DIRECT AUTHENTICATION INTO FLUTTER MOCKUP (NO LANDING PAGE)
+  if (isMobileMode) {
+    if (!isAuthenticated) {
+      if (isLargeScreen) {
+        return (
+          <div className="min-h-screen bg-[#0b131f] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1e293b] via-[#0f172a] to-[#020617] flex flex-col justify-center items-center py-6 px-4 selection:bg-[#0f5238] selection:text-white relative overflow-hidden">
+            {/* Subtle Background Glow & Grid Accent */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b0a_1px,transparent_1px),linear-gradient(to_bottom,#1e293b0a_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+
+            {/* Top Badge for Judges / Presentation */}
+            <div className="mb-4 flex items-center justify-between w-full max-w-[412px] z-20 px-2">
+              <div className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/15 px-3 py-1.5 rounded-full shadow-lg">
+                <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+                <span className="text-[11px] font-bold tracking-wider uppercase text-emerald-400">
+                  TRUVA Mobile App • Flutter Architecture
+                </span>
+              </div>
+              <a
+                href="/"
+                className="text-[11px] font-semibold text-slate-300 hover:text-white bg-white/10 px-3 py-1.5 rounded-full border border-white/15 transition-all"
+              >
+                Open Website
+              </a>
+            </div>
+
+            {/* Flutter-style mobile device mockup */}
+            <div className="w-[412px] h-[870px] max-h-[94vh] bg-[#f8faf6] rounded-[44px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.6),0_0_0_12px_#1e293b,0_0_0_15px_#334155] border-4 border-[#0f172a] flex flex-col overflow-hidden relative z-10 transition-all">
+              {/* Top Phone Dynamic Island / Speaker */}
+              <div className="w-full h-8 bg-[#f8faf6] shrink-0 flex items-center justify-between px-7 pt-1.5 select-none z-30 border-b border-[#e5e9e4]/60">
+                <span className="text-[11.5px] font-bold text-gray-800">9:41</span>
+                <div className="w-20 h-4.5 bg-[#0f172a] rounded-full flex items-center justify-center gap-2 shadow-inner">
+                  <div className="w-2 h-2 rounded-full bg-[#1e293b]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#0369a1]" />
+                </div>
+                <div className="flex items-center gap-1.5 text-gray-800">
+                  <span className="material-symbols-outlined text-[13px]">signal_cellular_alt</span>
+                  <span className="material-symbols-outlined text-[13px]">wifi</span>
+                  <span className="material-symbols-outlined text-[14px]">battery_full</span>
+                </div>
+              </div>
+
+              {/* Scrollable Device Content */}
+              <div className="flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col">
+                <AuthGateModal initialRole="consumer" />
+              </div>
+
+              {/* Bottom Home Indicator Bar */}
+              <div className="w-full h-5 bg-[#f8faf6] shrink-0 flex items-center justify-center pb-1 border-t border-[#e5e9e4]/60">
+                <div className="w-32 h-1 bg-gray-400 rounded-full" />
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Direct Mobile Screen View (Native Full Screen on Mobile Devices)
       return (
-        <div className="min-h-screen bg-[#0b131f] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1e293b] via-[#0f172a] to-[#020617] flex flex-col justify-center items-center py-6 px-4 selection:bg-[#0f5238] selection:text-white relative overflow-hidden">
-          {/* Subtle Background Glow & Grid Accent */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b0a_1px,transparent_1px),linear-gradient(to_bottom,#1e293b0a_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-
-          {/* Top Badge for Judges / Presentation */}
-          <div className="mb-4 flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/15 px-3.5 py-1.5 rounded-full shadow-lg z-20">
-            <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-            <span className="text-[11px] font-bold tracking-wider uppercase text-emerald-400">
-              TRUVA Mobile App • Flutter Architecture
-            </span>
-          </div>
-
-          {/* Flutter-style mobile device mockup */}
-          <div className="w-[412px] h-[870px] max-h-[94vh] bg-[#f8faf6] rounded-[44px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.6),0_0_0_12px_#1e293b,0_0_0_15px_#334155] border-4 border-[#0f172a] flex flex-col overflow-hidden relative z-10 transition-all">
-            {/* Top Phone Dynamic Island / Speaker */}
-            <div className="w-full h-8 bg-[#f8faf6] shrink-0 flex items-center justify-between px-7 pt-1.5 select-none z-30 border-b border-[#e5e9e4]/60">
-              <span className="text-[11.5px] font-bold text-gray-800">9:41</span>
-              <div className="w-20 h-4.5 bg-[#0f172a] rounded-full flex items-center justify-center gap-2 shadow-inner">
-                <div className="w-2 h-2 rounded-full bg-[#1e293b]" />
-                <div className="w-1.5 h-1.5 rounded-full bg-[#0369a1]" />
-              </div>
-              <div className="flex items-center gap-1.5 text-gray-800">
-                <span className="material-symbols-outlined text-[13px]">signal_cellular_alt</span>
-                <span className="material-symbols-outlined text-[13px]">wifi</span>
-                <span className="material-symbols-outlined text-[14px]">battery_full</span>
-              </div>
-            </div>
-
-            {/* Scrollable Device Content */}
-            <div className="flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col">
-              <AuthGateModal initialRole="consumer" />
-            </div>
-
-            {/* Bottom Home Indicator Bar */}
-            <div className="w-full h-5 bg-[#f8faf6] shrink-0 flex items-center justify-center pb-1 border-t border-[#e5e9e4]/60">
-              <div className="w-32 h-1 bg-gray-400 rounded-full" />
-            </div>
-          </div>
+        <div className="min-h-screen bg-[#f8faf6] flex flex-col justify-center items-center p-3 sm:p-6">
+          <AuthGateModal initialRole="consumer" />
         </div>
       );
     }
+  }
 
-    // Direct Mobile Screen View (Native Full Screen on Mobile Devices)
+  // 2. WEB APPLICATION MODE (Standard Portal with Landing Page)
+  if (!isAuthenticated && !isMobileMode) {
     return (
-      <div className="min-h-screen bg-[#f8faf6] flex flex-col justify-center items-center p-3 sm:p-6">
-        <AuthGateModal initialRole="consumer" />
-      </div>
+      <>
+        <LandingPage
+          onLaunchApp={(role) => {
+            setAuthModalRole(role || 'consumer');
+            setShowAuthModal(true);
+          }}
+          onOpenLogin={(role) => {
+            setAuthModalRole(role || 'consumer');
+            setShowAuthModal(true);
+          }}
+          onQuickScanProduct={(p) => {
+            setSelectedProduct(p);
+            setAuthModalRole('inspector');
+            setShowAuthModal(true);
+          }}
+        />
+        {showAuthModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+            <div className="relative w-full max-w-[480px]">
+              <button
+                onClick={() => setShowAuthModal(false)}
+                className="absolute top-4 right-4 z-50 p-2 text-gray-500 hover:text-black rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                title="Close"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+              <AuthGateModal initialRole={authModalRole} />
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -480,8 +531,9 @@ function TruvaApp() {
     </div>
   );
 
-  // On Laptop / Desktop (Large Screen): Always render inside sleek Flutter Mobile Phone Frame
-  if (isLargeScreen) {
+  // On Laptop / Desktop when Mobile App link is opened (?view=mobile or ?app=true):
+  // Render inside sleek Flutter Mobile Phone Frame
+  if (isMobileMode && isLargeScreen) {
     return (
       <div className="min-h-screen bg-[#0b131f] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1e293b] via-[#0f172a] to-[#020617] flex flex-col justify-center items-center py-5 px-4 selection:bg-[#0f5238] selection:text-white relative overflow-hidden">
         {/* Ambient Glow & Grid Accent */}
@@ -497,18 +549,14 @@ function TruvaApp() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                const url = window.location.origin;
-                navigator.clipboard?.writeText(url);
-                alert('Copied App Link: ' + url);
-              }}
+            <a
+              href="/"
               className="text-[11px] font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 px-2.5 py-1 rounded-full border border-slate-700 transition-all flex items-center gap-1 cursor-pointer"
-              title="Copy link to paste in PPT"
+              title="Open Full Desktop Web Platform"
             >
-              <span className="material-symbols-outlined text-[13px]">link</span>
-              <span>Copy App Link</span>
-            </button>
+              <span className="material-symbols-outlined text-[13px]">desktop_windows</span>
+              <span>Web Portal</span>
+            </a>
           </div>
         </div>
 
@@ -542,7 +590,7 @@ function TruvaApp() {
     );
   }
 
-  // On Mobile: Direct Full Screen Responsive App
+  // Full Desktop Website or Native Mobile View
   return appContent;
 }
 
