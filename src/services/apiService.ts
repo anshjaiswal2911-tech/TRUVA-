@@ -1,9 +1,12 @@
 import { Product, Verdict, DetailedModule, KeyFinding, ModuleStatus, OcrItem } from '../types';
 
+const PRODUCTION_BACKEND_URL = 'https://truva-backend-jy4z.onrender.com';
+
 const getApiEndpoints = (): string[] => {
   const envUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '');
   const list: string[] = [];
   if (envUrl) list.push(`${envUrl}/api/inspect`);
+  list.push(`${PRODUCTION_BACKEND_URL}/api/inspect`);
   list.push('/api/inspect');
   list.push('http://localhost:8000/api/inspect');
   return Array.from(new Set(list));

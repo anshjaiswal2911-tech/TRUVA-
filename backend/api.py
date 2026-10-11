@@ -88,6 +88,10 @@ app.add_middleware(
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
 
+@app.get("/")
+def root():
+    return {"status": "ok", "service": "TRUVA Legal Metrology API", "version": "2.0.0"}
+
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint."""
