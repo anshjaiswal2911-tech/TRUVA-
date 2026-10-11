@@ -60,19 +60,17 @@ export const AuthGateModal: React.FC<AuthGateModalProps> = ({ initialRole = 'con
 
   const handleGoogleSignIn = async () => {
     clearError();
-    if (isSupabaseConfigured) {
-      setIsSubmitting(true);
-      setLoadingAction('Connecting to Google OAuth...');
-      try {
-        await signInWithGoogle();
-      } catch (err: any) {
-        setShowGooglePicker(true);
-      } finally {
-        setIsSubmitting(false);
-        setLoadingAction(null);
-      }
-    } else {
+    setIsSubmitting(true);
+    setLoadingAction('Connecting to Google OAuth...');
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      console.error('Google Sign-in failed:', err);
+      // Only show mock selector if explicit network or provider issue occurred
       setShowGooglePicker(true);
+    } finally {
+      setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
