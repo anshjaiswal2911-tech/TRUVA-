@@ -27,13 +27,9 @@ function TruvaApp() {
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Check if mobile view is requested via URL (?view=mobile or #/mobile)
-  const [isMobileMode, setIsMobileMode] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    const params = new URLSearchParams(window.location.search);
-    const hash = window.location.hash.toLowerCase();
-    return params.get('view') === 'mobile' || hash.includes('mobile');
-  });
+  // In mobile app mode: always treat layout as mobile so all inner views render pure native mobile components
+  const isMobileAppLayout = true;
+  const [isMobileMode, setIsMobileMode] = useState<boolean>(true);
 
   const handleMobileLogout = async () => {
     await signOut();

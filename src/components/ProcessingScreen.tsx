@@ -208,61 +208,61 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({
   }, [fileBlob, customImage, product, onComplete]);
 
   return (
-    <div className="flex-grow flex flex-col items-center justify-start px-4 sm:px-6 py-6 sm:py-10 w-full max-w-[800px] lg:max-w-4xl mx-auto pb-28 sm:pb-12 animate-fade-in">
-      <div className="w-full flex flex-col lg:grid lg:grid-cols-12 lg:gap-10 lg:items-center">
-        {/* Left Column: Product Thumbnail Context & Scanner Laser & Progress */}
-        <div className="w-full lg:col-span-5 flex flex-col items-center mb-6 lg:mb-0">
-          <div className="relative w-44 h-44 sm:w-52 sm:h-52 lg:w-60 lg:h-60 rounded-3xl border-2 border-[#95d4b3]/80 bg-white shadow-[0_12px_32px_rgba(15,82,56,0.12)] overflow-hidden flex items-center justify-center p-2.5">
+    <div className="flex-grow flex flex-col items-center justify-start px-3 py-4 w-full mx-auto pb-16 animate-fade-in">
+      <div className="w-full flex flex-col items-center">
+        {/* Product Thumbnail Context & Scanner Laser & Progress */}
+        <div className="w-full flex flex-col items-center mb-5">
+          <div className="relative w-40 h-40 rounded-2xl border-2 border-[#95d4b3]/80 bg-white shadow-md overflow-hidden flex items-center justify-center p-2">
             <img
               src={customImage || product.imageUrl || 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=600&q=80'}
               alt={product.name}
-              className="object-contain w-full h-full rounded-2xl"
+              className="object-contain w-full h-full rounded-xl"
             />
             {/* Active Laser Scanning Sweep */}
             <div className="w-full h-1 bg-[#2d6a4f] shadow-[0_0_16px_#2d6a4f,0_0_8px_#52b788] animate-scan-laser absolute pointer-events-none"></div>
 
             <div className="absolute inset-0 bg-[#0f5238]/10 flex items-center justify-center pointer-events-none">
-              <div className="w-12 h-12 rounded-full bg-white/95 shadow-lg flex items-center justify-center pulse-ring">
-                <span className="material-symbols-outlined text-[#0f5238] text-[26px]" data-fill="1">
+              <div className="w-10 h-10 rounded-full bg-white/95 shadow-md flex items-center justify-center pulse-ring">
+                <span className="material-symbols-outlined text-[#0f5238] text-[22px]" data-fill="1">
                   fact_check
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 mt-4 px-3.5 py-1.5 rounded-full bg-[#dcfce7] border border-[#95d4b3] text-[#0f5238] text-[11px] font-bold uppercase tracking-wider shadow-xs">
+          <div className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full bg-[#dcfce7] border border-[#95d4b3] text-[#0f5238] text-[10px] font-bold uppercase tracking-wider shadow-xs">
             <span className="w-2 h-2 rounded-full bg-[#0f5238] animate-ping"></span>
-            <span>Rule 6 Statutory Metrology Pipeline</span>
+            <span>Rule 6 Statutory Pipeline</span>
           </div>
 
           {/* Overall Progress Bar */}
-          <div className="w-full max-w-md lg:max-w-none mt-6 flex flex-col items-center">
-            <div className="flex justify-between items-baseline w-full mb-2 px-1">
-              <span className="text-3xl sm:text-4xl font-black text-[#0f5238] font-mono tracking-tight">{progress}%</span>
-              <span className="text-xs font-bold uppercase tracking-wider text-[#707973]">
+          <div className="w-full mt-4 flex flex-col items-center px-2">
+            <div className="flex justify-between items-baseline w-full mb-1.5 px-1">
+              <span className="text-2xl font-black text-[#0f5238] font-mono tracking-tight">{progress}%</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#707973]">
                 {progress >= 100 ? 'Verification Complete' : 'Analyzing Label'}
               </span>
             </div>
 
-            <div className="w-full h-3 bg-[#e7e9e5] rounded-full overflow-hidden p-0.5 border border-[#bfc9c1]/40 shadow-inner">
+            <div className="w-full h-2.5 bg-[#e7e9e5] rounded-full overflow-hidden p-0.5 border border-[#bfc9c1]/40 shadow-inner">
               <div
                 className="h-full bg-gradient-to-r from-[#2d6a4f] via-[#0f5238] to-[#1b4332] rounded-full transition-all duration-300 ease-out shadow-xs"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
-            <p className="mt-2 text-xs text-[#404943] text-center font-medium">
+            <p className="mt-1.5 text-[11px] text-[#404943] text-center font-medium">
               Extracting mandatory statements under Legal Metrology Rule 6...
             </p>
           </div>
         </div>
 
-        {/* Right Column: Progressive Step List */}
-        <div className="w-full lg:col-span-7 flex flex-col items-center lg:items-stretch">
-          <div className="w-full max-w-md lg:max-w-none bg-white rounded-3xl border border-[#bfc9c1]/50 shadow-[0_6px_20px_rgba(0,0,0,0.03)] p-6 sm:p-7">
-            <div className="mb-5 pb-3 border-b border-[#bfc9c1]/30 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#191c1a]">Pipeline Progress</span>
-              <span className="text-[11px] text-[#0f5238] font-bold bg-[#dcfce7] px-2 py-0.5 rounded">
-                Automated OCR &amp; Verification
+        {/* Progressive Step List */}
+        <div className="w-full flex flex-col items-stretch">
+          <div className="w-full bg-white rounded-2xl border border-[#bfc9c1]/50 shadow-xs p-4">
+            <div className="mb-3.5 pb-2 border-b border-[#bfc9c1]/30 flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#191c1a]">Pipeline Progress</span>
+              <span className="text-[10px] text-[#0f5238] font-bold bg-[#dcfce7] px-2 py-0.5 rounded">
+                Automated Verification
               </span>
             </div>
 
