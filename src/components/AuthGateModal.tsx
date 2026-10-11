@@ -12,6 +12,7 @@ export const AuthGateModal: React.FC<AuthGateModalProps> = ({ initialRole = 'con
     signInConsumerWithEmail,
     signUpConsumerWithEmail,
     signInInspector,
+    switchRoleDemo,
     authError,
     clearError,
     isLoading,
@@ -239,10 +240,20 @@ export const AuthGateModal: React.FC<AuthGateModalProps> = ({ initialRole = 'con
                 <span>Continue with Google</span>
               </button>
 
+              {/* Quick 1-Tap Citizen Entry Button */}
+              <button
+                type="button"
+                onClick={() => switchRoleDemo('consumer')}
+                className="w-full h-11 bg-gradient-to-r from-[#1d4ed8] to-[#2563eb] hover:from-[#1e40af] hover:to-[#1d4ed8] text-white font-bold text-xs sm:text-[13px] rounded-xl px-4 flex items-center justify-center gap-2 transition-all duration-150 shadow-sm cursor-pointer active:scale-[0.98]"
+              >
+                <span className="material-symbols-outlined text-[19px]">bolt</span>
+                <span>Instant Demo Access (Citizen Portal)</span>
+              </button>
+
               <div className="flex items-center gap-3 my-2">
                 <div className="flex-1 h-px bg-[#e5e9e4]" />
                 <span className="text-[10px] font-semibold text-[#707973] uppercase tracking-wider">
-                  or email access
+                  or sign in with
                 </span>
                 <div className="flex-1 h-px bg-[#e5e9e4]" />
               </div>
@@ -361,20 +372,23 @@ export const AuthGateModal: React.FC<AuthGateModalProps> = ({ initialRole = 'con
                 </button>
               </form>
 
-              {/* Quick Fill Button for Authorized Officer Demo */}
-              <div className="pt-1 flex justify-center">
+                {/* Quick 1-Tap Inspector Demo Button */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setInspectorId('INS-RAJESH-889021');
-                    setInspectorSecret('');
-                  }}
-                  className="text-[11px] text-[#0f5238] hover:underline font-medium flex items-center gap-1 cursor-pointer"
+                  onClick={() => switchRoleDemo('inspector')}
+                  className="w-full h-11 bg-gradient-to-r from-[#0f5238] to-[#1e7250] hover:from-[#184835] hover:to-[#0f5238] text-white font-bold text-xs sm:text-[13px] rounded-xl px-4 flex items-center justify-center gap-2 transition-all duration-150 shadow-sm cursor-pointer active:scale-[0.98] mb-2"
                 >
-                  <span className="material-symbols-outlined text-[14px]">autorenew</span>
-                  <span>Use Verified Inspector Credentials (#889021)</span>
+                  <span className="material-symbols-outlined text-[19px]">bolt</span>
+                  <span>Instant Officer Demo Access (#889021)</span>
                 </button>
-              </div>
+
+                <div className="flex items-center gap-3 my-2">
+                  <div className="flex-1 h-px bg-[#e5e9e4]" />
+                  <span className="text-[10px] font-semibold text-[#707973] uppercase tracking-wider">
+                    or enter officer credentials
+                  </span>
+                  <div className="flex-1 h-px bg-[#e5e9e4]" />
+                </div>
             </div>
           )}
 
