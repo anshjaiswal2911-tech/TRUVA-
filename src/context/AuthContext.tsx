@@ -118,6 +118,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Initialize and listen to Supabase Auth state
   useEffect(() => {
     let isMounted = true;
+    const safetyTimer = setTimeout(() => {
+      if (isMounted) setIsLoading(false);
+    }, 1000);
 
     async function initSession() {
       try {
@@ -238,14 +241,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     setAuthError(null);
     try {
-      if (isSupabaseConfigured) {
+      // If real Supabase is configured and no specific custom email was picked via mock selector, trigger official Google OAuth
+      if (isSupabaseConfigured && !customEmail) {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
             redirectTo: window.location.origin,
             queryParams: {
+              prompt: 'select_account',
               access_type: 'offline',
-              prompt: 'consent',
             },
           },
         });
@@ -253,85 +257,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // Check if Google Client ID is provided and Google Identity Services is available
-      const googleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
-      const hasGis = typeof window !== 'undefined' && Boolean((window as any).google?.accounts?.oauth2);
-
-      if (googleClientId && hasGis) {
-        await new Promise<void>((resolve, reject) => {
-          try {
-            const client = (window as any).google.accounts.oauth2.initTokenClient({
-              client_id: googleClientId,
-              scope: 'openid email profile',
-              callback: async (tokenResponse: any) => {
-                if (tokenResponse.error) {
-                  reject(new Error(tokenResponse.error_description || tokenResponse.error));
-                  return;
-                }
-                try {
-                  const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-                  });
-                  const gUser = await res.json();
-                  const googleProfile: AuthProfile = {
-                    id: gUser.sub || `google-${Date.now()}`,
-                    email: gUser.email,
-                    fullName: gUser.name || gUser.email.split('@')[0],
-                    avatarUrl: gUser.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(gUser.name || gUser.email)}&background=0F5238&color=fff`,
-                    role: 'consumer',
-                  };
-                  const mockUser = {
-                    id: googleProfile.id,
-                    email: googleProfile.email,
-                    user_metadata: { full_name: googleProfile.fullName, avatar_url: googleProfile.avatarUrl },
-                    aud: 'authenticated',
-                    created_at: new Date().toISOString(),
-                  } as unknown as User;
-
-                  localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(googleProfile));
-                  sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(googleProfile));
-                  setUser(mockUser);
-                  setRole('consumer');
-                  setProfile(googleProfile);
-                  resolve();
-                } catch (fetchErr) {
-                  reject(fetchErr);
-                }
-              },
-            });
-            client.requestAccessToken();
-          } catch (gisErr) {
-            reject(gisErr);
-          }
-        });
-        return;
+      const email = (customEmail || '').trim().toLowerCase() || 'priyanjali.jaiswal@gmail.com';
+      let cleanName = (customName || '').trim();
+      if (!cleanName) {
+        const localPart = email.split('@')[0];
+        cleanName = localPart
+          .replace(/[._-]/g, ' ')
+          .replace(/\b\w/g, (l) => l.toUpperCase());
       }
 
-      // Direct Google Citizen Profile Login
-      const email = customEmail || 'priyanjali.jaiswal@gmail.com';
-      const fullName = customName || (customEmail ? customEmail.split('@')[0] : 'Priyanjali Jaiswal');
-      const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=0F5238&color=fff&bold=true`;
+      const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0F5238&color=fff&bold=true`;
 
-      const demoProfile: AuthProfile = {
+      const googleProfile: AuthProfile = {
         id: `google-user-${Date.now()}`,
         email: email,
-        fullName: fullName,
+        fullName: cleanName,
         avatarUrl: avatarUrl,
         role: 'consumer',
       };
       const mockUser = {
-        id: demoProfile.id,
-        email: demoProfile.email,
-        user_metadata: { full_name: demoProfile.fullName, avatar_url: demoProfile.avatarUrl },
+        id: googleProfile.id,
+        email: googleProfile.email,
+        user_metadata: { full_name: googleProfile.fullName, avatar_url: googleProfile.avatarUrl },
         aud: 'authenticated',
         created_at: new Date().toISOString(),
       } as unknown as User;
 
-      localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(demoProfile));
-      sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(demoProfile));
+      localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(googleProfile));
+      sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(googleProfile));
       setUser(mockUser);
       setRole('consumer');
-      setProfile(demoProfile);
+      setProfile(googleProfile);
     } catch (err: any) {
       const msg = err?.message || 'Google sign-in could not be completed.';
       setAuthError(msg);

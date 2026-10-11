@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Product } from '../types';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import { triggerSelectionHaptic, triggerHaptic } from '../services/haptics';
@@ -6,6 +7,7 @@ import { triggerSelectionHaptic, triggerHaptic } from '../services/haptics';
 interface NewInspectionViewProps {
   onStartScan: (product: Product, customImage?: string, fileBlob?: File | Blob) => void;
   onSelectProduct?: (product: Product) => void;
+  isMobileMode?: boolean;
 }
 
 function createPendingProduct(imageUrl?: string): Product {
@@ -73,7 +75,7 @@ function createPendingProduct(imageUrl?: string): Product {
   };
 }
 
-export const NewInspectionView: React.FC<NewInspectionViewProps> = ({ onStartScan, onSelectProduct }) => {
+export const NewInspectionView: React.FC<NewInspectionViewProps> = ({ onStartScan, onSelectProduct, isMobileMode = false }) => {
   const [dragActive, setDragActive] = useState(false);
   const [useCamera, setUseCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -81,10 +83,37 @@ export const NewInspectionView: React.FC<NewInspectionViewProps> = ({ onStartSca
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const startCamera = async () => {
+    triggerSelectionHaptic();
+    setCameraError(null);
+
+    // Try native Capacitor Camera first if available (iOS / Android)
     try {
-      triggerSelectionHaptic();
+      const photo = await Camera.getPhoto({
+        quality: 95,
+        allowEditing: false,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Camera,
+      });
+
+      if (photo.webPath) {
+        triggerHaptic('success');
+        const response = await fetch(photo.webPath);
+        const blob = await response.blob();
+        const pending = createPendingProduct(photo.webPath);
+        onStartScan(pending, photo.webPath, blob);
+        return;
+      }
+    } catch (e: any) {
+      // If user cancelled, do nothing
+      if (e?.message?.includes('cancelled') || e?.message?.includes('canceled') || e?.message?.includes('User cancelled')) {
+        return;
+      }
+      // Otherwise fallback to web camera API
+    }
+
+    // Fallback: Web navigator.mediaDevices.getUserMedia
+    try {
       setUseCamera(true);
-      setCameraError(null);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }
       });
@@ -187,9 +216,9 @@ export const NewInspectionView: React.FC<NewInspectionViewProps> = ({ onStartSca
         </div>
 
         {/* Responsive Workspace Body */}
-        <div className="w-full flex flex-col lg:grid lg:grid-cols-12 lg:gap-8 items-start">
+        <div className={`w-full flex flex-col ${isMobileMode ? '' : 'lg:grid lg:grid-cols-12 lg:gap-8'} items-start`}>
           {/* Left Column: Dropzone / Camera & Upload Actions */}
-          <div className="w-full lg:col-span-7 flex flex-col items-center">
+          <div className={`w-full ${isMobileMode ? '' : 'lg:col-span-7'} flex flex-col items-center`}>
             {/* Scan Area Box */}
             {useCamera ? (
               <div className="w-full h-72 sm:h-80 bg-black rounded-2xl overflow-hidden relative flex flex-col items-center justify-center mb-5 border-2 border-[#2d6a4f] shadow-inner">
@@ -353,7 +382,7 @@ export const NewInspectionView: React.FC<NewInspectionViewProps> = ({ onStartSca
           </div>
 
           {/* Right Column: Regulatory Checklist & Guidance (Stacks naturally on mobile, right panel on desktop) */}
-          <div className="w-full lg:col-span-5 flex flex-col mt-6 lg:mt-0 pt-5 lg:pt-0 border-t lg:border-t-0 lg:border-l border-[#bfc9c1]/40 lg:pl-8 text-left space-y-4">
+          <div className={`w-full ${isMobileMode ? 'mt-4 pt-4 border-t' : 'lg:col-span-5 mt-6 lg:mt-0 pt-5 lg:pt-0 border-t lg:border-t-0 lg:border-l lg:pl-8'} border-[#bfc9c1]/40 flex flex-col text-left space-y-4`}>
             <div>
               <span className="text-[11px] font-bold text-[#707973] uppercase tracking-wider block mb-2.5">
                 Key Rule 6 Declarations Detected:

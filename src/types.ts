@@ -69,6 +69,7 @@ export interface Product {
   category: string;
   barcode: string;
   mrp?: string;
+  unitSalePrice?: string;
   volume?: string;
   quantity?: string;
   mfgDate?: string;

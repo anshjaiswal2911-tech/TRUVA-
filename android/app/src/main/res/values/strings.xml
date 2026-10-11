@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">TRUVA</string>
+    <string name="title_activity_main">TRUVA</string>
+    <string name="package_name">in.gov.truva.app</string>
+    <string name="custom_url_scheme">in.gov.truva.app</string>
+</resources>

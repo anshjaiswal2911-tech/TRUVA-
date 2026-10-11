@@ -17,7 +17,7 @@ interface SettingsViewProps {
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ onSignOut, onRefreshProducts }) => {
-  const { profile, isInspector, isConsumer, signOut } = useAuth();
+  const { profile, isInspector, isConsumer, signOut, switchRoleDemo } = useAuth();
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [appearanceMode, setAppearanceMode] = useState<'system' | 'light' | 'dark'>('system');
   const [notifsEnabled, setNotifsEnabled] = useState(true);
@@ -127,16 +127,50 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onSignOut, onRefresh
             </div>
           </section>
 
-          {/* Desktop Sign Out Button */}
+          {/* Fast Role Switcher for Testing / Demonstration */}
+          <div className="w-full bg-white border border-[#bfc9c1]/80 rounded-2xl p-4 shadow-2xs flex flex-col gap-2.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#707973]">
+              Active Access Role
+            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#191c1a]">
+                {isInspector ? 'Legal Metrology Inspector' : 'Citizen Consumer'}
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                isInspector
+                  ? 'bg-[#f0fdf4] text-[#0f5238] border-[#bbf7d0]'
+                  : 'bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]'
+              }`}>
+                Active
+              </span>
+            </div>
+
+            <button
+              onClick={() => {
+                triggerSelectionHaptic();
+                switchRoleDemo(isInspector ? 'consumer' : 'inspector');
+              }}
+              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 ${
+                isInspector
+                  ? 'bg-[#eff6ff] hover:bg-[#dbeafe] text-[#1d4ed8] border border-[#bfdbfe]'
+                  : 'bg-[#f0fdf4] hover:bg-[#dcfce7] text-[#0f5238] border border-[#bbf7d0]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">swap_horiz</span>
+              <span>{isInspector ? 'Switch to Citizen Consumer Mode' : 'Switch to Legal Metrology Inspector'}</span>
+            </button>
+          </div>
+
+          {/* Sign Out Button (Visible on both Mobile and Desktop) */}
           <button
             onClick={async () => {
               await signOut();
               onSignOut();
             }}
-            className="hidden lg:flex w-full text-xs font-bold text-[#ba1a1a] hover:text-white hover:bg-[#ba1a1a] border border-[#ba1a1a]/40 hover:border-[#ba1a1a] py-3 rounded-xl transition-all items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-2xs"
+            className="flex w-full text-xs font-bold text-[#ba1a1a] hover:text-white hover:bg-[#ba1a1a] border border-[#ba1a1a]/40 hover:border-[#ba1a1a] py-3 rounded-xl transition-all items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-2xs"
           >
             <span className="material-symbols-outlined text-[17px]">logout</span>
-            Terminate Session / Sign Out
+            Terminate Session / Change Access Role
           </button>
         </div>
 

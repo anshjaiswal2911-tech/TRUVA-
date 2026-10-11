@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRUVA | Product Label Intelligence - Interactive Slide</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b1410; }
+    .slide-canvas {
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      max-width: 1400px;
+      background: #ffffff;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .hover-glow:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 20px 25px -5px rgba(15, 82, 56, 0.3), 0 8px 10px -6px rgba(15, 82, 56, 0.3);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-6 text-gray-900">
+  
+  <!-- Presentation Slide -->
+  <div class="slide-canvas rounded-2xl overflow-hidden relative flex flex-col p-6 sm:p-10 border border-gray-200">
+    
+    <!-- Top Header Bar -->
+    <div class="flex items-center justify-between pb-3 border-b-2 border-gray-100">
+      <!-- Team Logo -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 text-blue-700 font-black text-2xl tracking-tighter">
+          <svg class="w-7 h-7 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 3s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+          </svg>
+          <span class="text-blue-900 text-3xl font-extrabold tracking-tight">HUMBLE</span>
+        </div>
+      </div>
+
+      <!-- TRUVA Brand Header -->
+      <div class="flex flex-col items-center">
+        <div class="flex items-center gap-2">
+          <svg class="w-8 h-8 text-[#0f5238]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5" />
+            <path d="M2 12l10 5 10-5" />
+          </svg>
+          <span class="text-3xl sm:text-4xl font-black text-[#0f5238] tracking-tight">TRUVA</span>
+        </div>
+        <span class="text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-gray-500 mt-0.5">
+          LEGAL METROLOGY INTELLIGENCE
+        </span>
+      </div>
+
+      <!-- Blank Spacer for Balance -->
+      <div class="w-24"></div>
+    </div>
+
+    <!-- Main Grid Content -->
+    <div class="flex-1 grid grid-cols-12 gap-6 pt-4 items-stretch">
+      
+      <!-- Left Column: Problem & Idea (5 cols) -->
+      <div class="col-span-5 flex flex-col justify-between space-y-4">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 uppercase">
+            PRODUCT LABEL <span class="text-[#0f5238]">INTELLIGENCE</span>
+          </h1>
+          <p class="text-xs sm:text-sm font-bold text-blue-700 tracking-wide mt-0.5">
+            AI + OCR POWERED COMPLIANCE VERIFICATION
+          </p>
+          <p class="text-xs font-semibold text-gray-500">Scan. Understand. Verify.</p>
+        </div>
+
+        <!-- Problems Box -->
+        <div class="bg-blue-50/50 rounded-2xl border-2 border-blue-200 p-4 space-y-2">
+          <h3 class="text-xs sm:text-sm font-extrabold text-blue-900 uppercase tracking-wide">
+            CURRENTLY FACED PROBLEMS :
+          </h3>
+          <ul class="text-[11px] sm:text-xs text-gray-700 space-y-1.5 leading-snug">
+            <li>• <strong>Missing Mandatory Declarations:</strong> Important info like MRP, net quantity, manufacturer details may be omitted.</li>
+            <li>• <strong>Difficult Label Verification:</strong> Small fonts & scattered text make manual checking slow and error-prone.</li>
+            <li>• <strong>Misleading Information:</strong> Inconsistent MRP, weight, and date declarations across packaging.</li>
+            <li>• <strong>Time-Consuming Audits:</strong> Officers inspect dozens of declarations per pack manually.</li>
+            <li>• <strong>Lack of Evidence Reporting:</strong> Recording violations with verifiable proof is challenging.</li>
+          </ul>
+        </div>
+
+        <!-- Our Idea Box -->
+        <div class="bg-emerald-50/50 rounded-2xl border-2 border-emerald-300 p-4 space-y-2">
+          <h3 class="text-xs sm:text-sm font-extrabold text-emerald-950 uppercase tracking-wide">
+            OUR IDEA :
+          </h3>
+          <ul class="text-[11px] sm:text-xs text-gray-700 space-y-1.5 leading-snug">
+            <li>• <strong>OCR-Based Label Scanning:</strong> Instant extraction from commodity packaging images.</li>
+            <li>• <strong>Automated Data Extraction:</strong> Real MRP, metric quantity, packer, batch details.</li>
+            <li>• <strong>Legal Metrology Rule Engine:</strong> Automated check against Packaged Commodities Rules, 2011.</li>
+            <li>• <strong>Violation Detection:</strong> Flags non-compliant font sizes, missing declarations & overcharging.</li>
+            <li>• <strong>Inspector Dossier Verification:</strong> One-click court-ready Section 36 evidence reports.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Right Column: Interactive Mockup Prototype (7 cols) -->
+      <div class="col-span-7 flex flex-col justify-between pl-2">
+        
+        <!-- Section Header with Arrows -->
+        <div class="text-center">
+          <h2 class="text-2xl sm:text-3xl font-black text-blue-900 uppercase tracking-tight">
+            WEB &amp; INSPECTOR PROTOTYPE
+          </h2>
+          <div class="inline-flex items-center gap-2 mt-1 px-4 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 font-extrabold text-xs shadow-xs animate-bounce">
+            <span>👇 CLICK ON US 👇</span>
+          </div>
+        </div>
+
+        <!-- Dual Clickable Prototype Display -->
+        <div class="grid grid-cols-12 gap-4 items-center my-auto py-2">
+          
+          <!-- 1. MOBILE PROTOTYPE (CLICKABLE LINK) -->
+          <a 
+            href="/?view=mobile" 
+            target="_blank" 
+            class="col-span-5 hover-glow transition-all duration-200 block group cursor-pointer relative"
+            title="Click to launch TRUVA Mobile App Prototype"
+          >
+            <!-- Badge -->
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-20 bg-emerald-600 text-white text-[10px] font-extrabold px-3 py-0.5 rounded-full shadow-md group-hover:bg-emerald-500 whitespace-nowrap">
+              📱 CLICK FOR MOBILE APP
+            </div>
+
+            <!-- Phone Mockup Container -->
+            <div class="w-full bg-black rounded-[36px] p-2.5 shadow-xl border-4 border-gray-800 ring-2 ring-emerald-500/40">
+              <div class="w-full bg-[#f8faf6] rounded-[28px] overflow-hidden flex flex-col h-[340px]">
+                <!-- Phone Header -->
+                <div class="bg-white p-2.5 border-b border-gray-200 flex items-center justify-between">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-5 h-5 rounded-md bg-[#0f5238] text-white flex items-center justify-center text-[10px] font-black">T</span>
+                    <span class="font-extrabold text-[11px] text-[#0f5238]">TRUVA Citizen</span>
+                  </div>
+                  <span class="material-symbols-outlined text-[16px] text-gray-600">menu</span>
+                </div>
+
+                <!-- Camera Viewfinder -->
+                <div class="relative flex-1 bg-gray-900 flex items-center justify-center p-2 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=400&q=80" alt="Oil packet" class="w-full h-full object-cover rounded-xl opacity-80" />
+                  <!-- Green Corner Reticle -->
+                  <div class="absolute inset-4 border-2 border-emerald-400 rounded-lg pointer-events-none"></div>
+                  <div class="absolute bottom-2 px-2 py-0.5 bg-black/70 rounded text-[9px] text-emerald-300 font-mono">
+                    Fortune Refined Oil 1L
+                  </div>
+                </div>
+
+                <!-- Scanner Checklist -->
+                <div class="bg-white p-2.5 space-y-1 text-[9.5px]">
+                  <div class="flex items-center gap-1 text-emerald-700 font-bold">
+                    <span>✓</span> <span>Extracting text (OCR)</span>
+                  </div>
+                  <div class="flex items-center gap-1 text-emerald-700 font-bold">
+                    <span>✓</span> <span>Identifying declarations</span>
+                  </div>
+                  <div class="flex items-center gap-1 text-blue-700 font-bold">
+                    <span>✓</span> <span>Rule 6 Compliance Pass</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </a>
+
+          <!-- 2. DESKTOP INSPECTOR MONITOR (CLICKABLE LINK) -->
+          <a 
+            href="/?view=desktop" 
+            target="_blank" 
+            class="col-span-7 hover-glow transition-all duration-200 block group cursor-pointer relative"
+            title="Click to launch TRUVA Desktop Inspector Prototype"
+          >
+            <!-- Badge -->
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-20 bg-blue-700 text-white text-[10px] font-extrabold px-3 py-0.5 rounded-full shadow-md group-hover:bg-blue-600 whitespace-nowrap">
+              🖥️ CLICK FOR WEB PROTOTYPE
+            </div>
+
+            <!-- Monitor Chassis -->
+            <div class="w-full bg-[#1e293b] rounded-2xl p-2.5 shadow-xl border-4 border-gray-700 ring-2 ring-blue-500/40">
+              <div class="w-full bg-white rounded-xl overflow-hidden flex flex-col h-[340px] text-gray-800">
+                <!-- Monitor App Bar -->
+                <div class="bg-[#0f5238] text-white px-3 py-2 flex items-center justify-between text-xs font-bold">
+                  <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded bg-white/20 flex items-center justify-center text-[10px]">⚖️</span>
+                    <span>TRUVA Inspector Terminal (#889021)</span>
+                  </div>
+                  <span class="text-[10px] text-emerald-200">Legal Metrology Act, 2009</span>
+                </div>
+
+                <!-- Inspection Dashboard Details -->
+                <div class="p-3 grid grid-cols-12 gap-2 text-xs flex-1 overflow-hidden">
+                  <!-- Pouch photo -->
+                  <div class="col-span-4 bg-gray-100 rounded-lg p-1.5 flex flex-col items-center justify-center border border-gray-200">
+                    <img src="https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80" alt="Pack" class="h-28 object-contain rounded" />
+                    <span class="text-[9px] font-bold text-gray-500 mt-1">Avol Fortune Oil</span>
+                  </div>
+
+                  <!-- Extracted Information -->
+                  <div class="col-span-8 space-y-1.5 text-[10.5px]">
+                    <div class="font-bold text-gray-900 border-b pb-1 flex justify-between items-center">
+                      <span>Statutory Declarations</span>
+                      <span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">COMPLIANT</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1 text-[10px]">
+                      <div><strong>Commodity:</strong> Fortune Refined Oil</div>
+                      <div><strong>Net Qty:</strong> 1 L (Metric)</div>
+                      <div><strong>MRP:</strong> ₹ 210.00 (Incl. Taxes)</div>
+                      <div><strong>Packer:</strong> Adani Wilmar Ltd.</div>
+                      <div><strong>Mfg Date:</strong> 12/04/2024</div>
+                      <div><strong>Expiry Date:</strong> 11/10/2025</div>
+                    </div>
+                    <div class="p-1.5 bg-emerald-50 rounded border border-emerald-200 text-[9px] text-emerald-900 font-semibold mt-1">
+                      ✓ All 8 mandatory declarations under Rule 6 verified.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Monitor Stand -->
+            <div class="w-16 h-4 bg-gray-700 mx-auto rounded-b"></div>
+            <div class="w-28 h-2 bg-gray-600 mx-auto rounded-full"></div>
+          </a>
+
+        </div>
+
+        <!-- USP Summary Bar -->
+        <div class="pt-2">
+          <div class="text-[10px] font-extrabold uppercase text-gray-500 mb-1">
+            Unique Selling Proposition (USP) :
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center text-[10px] font-bold">
+            <div class="bg-gray-100 border border-gray-300 rounded-lg py-1.5 px-1 text-gray-800">
+              OCR-Based Label Extraction
+            </div>
+            <div class="bg-gray-100 border border-gray-300 rounded-lg py-1.5 px-1 text-gray-800">
+              Rule-Based Verification
+            </div>
+            <div class="bg-gray-100 border border-gray-300 rounded-lg py-1.5 px-1 text-gray-800">
+              Evidence-Backed Reports
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

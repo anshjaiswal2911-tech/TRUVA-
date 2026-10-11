@@ -23,10 +23,44 @@ import { AuthGateModal } from './components/AuthGateModal';
 type ViewMode = 'main' | 'processing' | 'result' | 'full_report' | 'evidence_detail';
 
 function TruvaApp() {
-  const { isAuthenticated, isInspector, isConsumer, isLoading, signInInspector, signInConsumerWithEmail, switchRoleDemo } = useAuth();
+  const { isAuthenticated, isInspector, isConsumer, isLoading, signInInspector, signInConsumerWithEmail, switchRoleDemo, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Check if mobile view is requested via URL (?view=mobile or #/mobile)
+  const [isMobileMode, setIsMobileMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    const hash = window.location.hash.toLowerCase();
+    return params.get('view') === 'mobile' || hash.includes('mobile');
+  });
+
+  const handleMobileLogout = async () => {
+    await signOut();
+  };
+
+  const [isLargeScreen, setIsLargeScreen] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth >= 640 : false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsLargeScreen(window.innerWidth >= 640);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handleUrlRoute = () => {
+      const params = new URLSearchParams(window.location.search);
+      const hash = window.location.hash.toLowerCase();
+      const mobileReq = params.get('view') === 'mobile' || hash.includes('mobile');
+      setIsMobileMode(mobileReq);
+    };
+    handleUrlRoute();
+    window.addEventListener('hashchange', handleUrlRoute);
+    return () => window.removeEventListener('hashchange', handleUrlRoute);
+  }, []);
   
   // Persistent Scan History Cache via localStorage (real scans only)
   const [allProducts, setAllProducts] = useState<Product[]>(() => getCachedProducts());
@@ -169,7 +203,48 @@ function TruvaApp() {
     );
   }
 
-  // Unauthenticated Visitors: Render ONLY Landing Page. All app dashboards & features are strictly locked behind login!
+  // 1. Mobile Visitors who haven't logged in this session: DIRECT AUTHENTICATION SCREEN (NO LANDING PAGE!)
+  if (isMobileMode && !isAuthenticated) {
+    if (isLargeScreen) {
+      return (
+        <div className="min-h-screen bg-[#e8eee9] flex flex-col justify-center items-center py-6 px-4 selection:bg-[#0f5238] selection:text-white">
+          {/* Flutter-style mobile device mockup */}
+          <div className="w-[412px] h-[860px] max-h-[96vh] bg-white rounded-[40px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3),0_0_0_10px_#1e293b,0_0_0_12px_#334155] border-4 border-[#0f172a] flex flex-col overflow-hidden relative">
+            {/* Top Phone Camera Dot / Speaker */}
+            <div className="w-full h-7 bg-white shrink-0 flex items-center justify-between px-6 pt-1 select-none z-30">
+              <span className="text-[11px] font-semibold text-gray-700">9:41</span>
+              <div className="w-16 h-4 bg-[#0f172a] rounded-full flex items-center justify-center">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#1e293b]" />
+              </div>
+              <div className="flex items-center gap-1.5 text-gray-700">
+                <span className="material-symbols-outlined text-[13px]">signal_cellular_alt</span>
+                <span className="material-symbols-outlined text-[13px]">wifi</span>
+                <span className="material-symbols-outlined text-[14px]">battery_full</span>
+              </div>
+            </div>
+
+            {/* Scrollable Device Content */}
+            <div className="flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col">
+              <AuthGateModal initialRole="consumer" />
+            </div>
+
+            {/* Bottom Home Indicator Bar */}
+            <div className="w-full h-5 bg-white shrink-0 flex items-center justify-center pb-1">
+              <div className="w-32 h-1 bg-gray-400 rounded-full" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen bg-[#f8faf6] flex flex-col justify-center items-center p-3 sm:p-6">
+        <AuthGateModal initialRole="consumer" />
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated Desktop Visitors: Render Landing Page with Auth Modal
   if (!isAuthenticated) {
     return (
       <>
@@ -202,8 +277,8 @@ function TruvaApp() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#f8faf6] text-[#191c1a] flex flex-col font-sans selection:bg-[#2d6a4f] selection:text-white">
+  const appContent = (
+    <div className="min-h-full flex-1 bg-[#f8faf6] text-[#191c1a] flex flex-col font-sans selection:bg-[#2d6a4f] selection:text-white">
 
       {/* Top App Header */}
       <HeaderBar
@@ -217,10 +292,12 @@ function TruvaApp() {
         }}
         unreadCount={unreadNotifs}
         isOffline={isOffline}
+        isMobileMode={isMobileMode || !isLargeScreen}
+        onSignOut={handleMobileLogout}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col">
+      <main className={`flex-1 flex flex-col ${isMobileMode ? 'pb-24' : 'pb-24 sm:pb-8'}`}>
         {/* Processing Pipeline Screen */}
         {viewMode === 'processing' && (
           <ProcessingScreen
@@ -265,6 +342,7 @@ function TruvaApp() {
             product={selectedProduct}
             customImage={customImage}
             isOffline={isOffline}
+            isMobileMode={isMobileMode}
             onViewFullReport={() => setViewMode('full_report')}
             onSelectModule={(moduleKey) => {
               if (moduleKey === 'evidence') {
@@ -285,6 +363,7 @@ function TruvaApp() {
         {viewMode === 'full_report' && selectedProduct && (
           <FullProductReportView
             product={selectedProduct}
+            isMobileMode={isMobileMode}
             onBack={() => setViewMode('result')}
             onOpenEvidenceDetail={() => setViewMode('evidence_detail')}
             onCompare={() => {
@@ -324,6 +403,7 @@ function TruvaApp() {
               <HomeView
                 recentProducts={allProducts.slice(0, 4)}
                 isOffline={isOffline}
+                isMobileMode={isMobileMode}
                 onScanClick={() => setActiveTab('scan')}
                 onSelectProduct={(product) => {
                   setSelectedProduct(product);
@@ -336,6 +416,7 @@ function TruvaApp() {
             {activeTab === 'scan' && (
               <NewInspectionView
                 onStartScan={handleStartScan}
+                isMobileMode={isMobileMode}
                 onSelectProduct={(product) => {
                   setSelectedProduct(product);
                   setViewMode('result');
@@ -347,6 +428,7 @@ function TruvaApp() {
               <ScanHistoryView
                 products={allProducts}
                 isOffline={isOffline}
+                isMobileMode={isMobileMode}
                 onRefreshProducts={(updated) => setAllProducts(updated)}
                 onSelectProduct={(product) => {
                   setSelectedProduct(product);
@@ -360,6 +442,7 @@ function TruvaApp() {
               <ProductCompareView
                 productA={compareProductA}
                 productB={compareProductB}
+                isMobileMode={isMobileMode}
                 onSelectProductA={setCompareProductA}
                 onSelectProductB={setCompareProductB}
               />
@@ -430,10 +513,45 @@ function TruvaApp() {
             setActiveTab(tab);
           }}
           unreadCount={unreadNotifs}
+          isMobileMode={isMobileMode && isLargeScreen}
         />
       )}
     </div>
   );
+
+  if (isMobileMode && isLargeScreen) {
+    return (
+      <div className="min-h-screen bg-[#e8eee9] flex flex-col justify-center items-center py-6 px-4 selection:bg-[#0f5238] selection:text-white">
+        {/* Flutter-style mobile device mockup */}
+        <div className="w-[412px] h-[860px] max-h-[96vh] bg-white rounded-[40px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3),0_0_0_10px_#1e293b,0_0_0_12px_#334155] border-4 border-[#0f172a] flex flex-col overflow-hidden relative">
+          {/* Top Phone Camera Dot / Speaker */}
+          <div className="w-full h-7 bg-white shrink-0 flex items-center justify-between px-6 pt-1 select-none z-30 border-b border-[#f0f2ef]">
+            <span className="text-[11px] font-semibold text-gray-700">9:41</span>
+            <div className="w-16 h-4 bg-[#0f172a] rounded-full flex items-center justify-center">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#1e293b]" />
+            </div>
+            <div className="flex items-center gap-1.5 text-gray-700">
+              <span className="material-symbols-outlined text-[13px]">signal_cellular_alt</span>
+              <span className="material-symbols-outlined text-[13px]">wifi</span>
+              <span className="material-symbols-outlined text-[14px]">battery_full</span>
+            </div>
+          </div>
+
+          {/* Scrollable Device App Content */}
+          <div className="flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col relative">
+            {appContent}
+          </div>
+
+          {/* Bottom Home Indicator Bar */}
+          <div className="w-full h-5 bg-[#f8faf6] shrink-0 flex items-center justify-center pb-1 border-t border-[#f0f2ef]">
+            <div className="w-32 h-1 bg-gray-400 rounded-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return appContent;
 }
 
 export default function App() {

@@ -10,6 +10,7 @@ interface HomeViewProps {
   onSelectProduct: (product: Product) => void;
   onQuickAccessFilter: (category: string) => void;
   isOffline?: boolean;
+  isMobileMode?: boolean;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
@@ -18,6 +19,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onSelectProduct,
   onQuickAccessFilter,
   isOffline = false,
+  isMobileMode = false,
 }) => {
   const { isInspector, profile } = useAuth();
 
@@ -71,8 +73,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {!isInspector ? (
         <>
           {/* Consumer Hero Banner */}
-          <section className="bg-gradient-to-br from-white via-[#f0f7ff]/70 to-[#e8f2ff] border border-[#bfdbfe]/70 rounded-3xl p-6 sm:p-8 shadow-[0_2px_12px_rgba(29,78,216,0.04)] flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="flex flex-col gap-3 max-w-2xl">
+          <section className={`bg-gradient-to-br from-white via-[#f0f7ff]/70 to-[#e8f2ff] border border-[#bfdbfe]/70 rounded-3xl p-5 sm:p-8 shadow-[0_2px_12px_rgba(29,78,216,0.04)] flex flex-col ${isMobileMode ? '' : 'lg:flex-row lg:items-center lg:justify-between'} gap-5 sm:gap-6`}>
+            <div className="flex flex-col gap-2.5 sm:gap-3 max-w-2xl">
               <div className="inline-flex items-center gap-2 bg-[#eff6ff] border border-[#bfdbfe] px-3 py-1 rounded-full w-fit shadow-xs">
                 <span className="w-2 h-2 rounded-full bg-[#2563eb] animate-pulse"></span>
                 <span className="text-[10px] sm:text-[11px] font-bold text-[#1d4ed8] uppercase tracking-wider">
@@ -80,7 +82,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0f172a] leading-[1.15]">
+              <h1 className="text-xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0f172a] leading-[1.15]">
                 Smart Product &amp; <span className="text-[#1d4ed8]">Fair Price Intelligence</span>
               </h1>
 
@@ -88,57 +90,54 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 Scan packaged food, FMCG, and commodities to verify printed MRPs against hidden inflation, detect missing manufacturing dates, and verify Unit Sale Price (USP) accuracy.
               </p>
 
-              <div className="pt-2 flex flex-wrap items-center gap-3">
+              <div className="pt-2 w-full">
                 <button
                   onClick={() => {
                     triggerTabHaptic();
                     onScanClick();
                   }}
-                  className="bg-[#1d4ed8] hover:bg-[#1e40af] text-white font-semibold text-sm rounded-xl px-6 py-3.5 h-12 flex items-center justify-center gap-2.5 shadow-[0_4px_14px_rgba(29,78,216,0.25)] hover:shadow-[0_6px_20px_rgba(29,78,216,0.35)] transition-all duration-200 active:scale-[0.98] cursor-pointer"
+                  className="w-full sm:w-auto bg-[#1d4ed8] hover:bg-[#1e40af] text-white font-bold text-xs sm:text-sm rounded-xl px-5 py-3 flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[20px]" data-fill="1">qr_code_scanner</span>
+                  <span className="material-symbols-outlined text-[19px]" data-fill="1">qr_code_scanner</span>
                   <span>Scan Packaged Product</span>
                 </button>
-                <span className="text-xs text-[#64748b] font-medium hidden sm:inline-block">
-                  Instant AI verification for consumer safety &amp; rights
-                </span>
               </div>
             </div>
 
             {/* Consumer Quick Metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-3 shrink-0 lg:w-64 border-t lg:border-t-0 lg:border-l border-[#bfdbfe]/50 pt-4 lg:pt-0 lg:pl-6">
-              <div className="bg-white p-3.5 rounded-2xl border border-[#e2e8f0] shadow-xs flex flex-col">
+            <div className={`grid grid-cols-2 ${isMobileMode ? 'grid-cols-2' : 'sm:grid-cols-3 lg:grid-cols-1 lg:w-64 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6'} gap-2.5 sm:gap-3 shrink-0 border-t border-[#bfdbfe]/50 pt-4`}>
+              <div className="bg-white p-3 rounded-2xl border border-[#e2e8f0] shadow-xs flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748b]">
                   My Scanned Products
                 </span>
-                <span className="text-xl sm:text-2xl font-black text-[#0f172a] mt-0.5">
+                <span className="text-lg sm:text-2xl font-black text-[#0f172a] mt-0.5">
                   {recentProducts.length}
                 </span>
-                <span className="text-[11px] text-[#1d4ed8] font-semibold mt-0.5">
+                <span className="text-[10px] sm:text-[11px] text-[#1d4ed8] font-semibold mt-0.5">
                   Citizen verified
                 </span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-2xl border border-[#e2e8f0] shadow-xs flex flex-col">
+              <div className="bg-white p-3 rounded-2xl border border-[#e2e8f0] shadow-xs flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748b]">
                   Fairly Priced &amp; Safe
                 </span>
-                <span className="text-xl sm:text-2xl font-black text-[#15803d] mt-0.5">
+                <span className="text-lg sm:text-2xl font-black text-[#15803d] mt-0.5">
                   {verifiedCount}
                 </span>
-                <span className="text-[11px] text-[#16a34a] font-medium mt-0.5">
+                <span className="text-[10px] sm:text-[11px] text-[#16a34a] font-medium mt-0.5">
                   Statutory compliant
                 </span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-2xl border border-[#e2e8f0] shadow-xs flex flex-col col-span-2 sm:col-span-1">
+              <div className={`bg-white p-3 rounded-2xl border border-[#e2e8f0] shadow-xs flex flex-col ${isMobileMode ? 'col-span-2' : 'col-span-2 sm:col-span-1'}`}>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748b]">
                   Price / Label Warnings
                 </span>
-                <span className="text-xl sm:text-2xl font-black text-[#b91c1c] mt-0.5">
+                <span className="text-lg sm:text-2xl font-black text-[#b91c1c] mt-0.5">
                   {reviewCount}
                 </span>
-                <span className="text-[11px] text-[#dc2626] font-medium mt-0.5">
+                <span className="text-[10px] sm:text-[11px] text-[#dc2626] font-medium mt-0.5">
                   Actionable flags
                 </span>
               </div>
@@ -157,7 +156,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <span className="text-xs text-[#64748b] font-medium">Jago Grahak Jago</span>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className={`grid ${isMobileMode ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4'} gap-2.5 sm:gap-4`}>
               {/* Tool 1: Instant Scan */}
               <button
                 onClick={() => {
@@ -280,8 +279,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
            ========================================================================= */
         <>
           {/* Inspector Hero Banner */}
-          <section className="bg-gradient-to-br from-white via-[#f2f5f1] to-[#e7ece5] border border-[#bfc9c1]/60 rounded-3xl p-6 sm:p-8 shadow-[0_2px_12px_rgba(15,82,56,0.04)] flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="flex flex-col gap-3 max-w-2xl">
+          <section className={`bg-gradient-to-br from-white via-[#f2f5f1] to-[#e7ece5] border border-[#bfc9c1]/60 rounded-3xl p-5 sm:p-8 shadow-[0_2px_12px_rgba(15,82,56,0.04)] flex flex-col ${isMobileMode ? '' : 'lg:flex-row lg:items-center lg:justify-between'} gap-5 sm:gap-6`}>
+            <div className="flex flex-col gap-2.5 sm:gap-3 max-w-2xl">
               <div className="inline-flex items-center gap-2 bg-[#dcfce7] border border-[#95d4b3]/70 px-3 py-1 rounded-full w-fit shadow-xs">
                 <span className="w-2 h-2 rounded-full bg-[#0f5238] animate-pulse"></span>
                 <span className="text-[10px] sm:text-[11px] font-bold text-[#0f5238] uppercase tracking-wider">
@@ -289,7 +288,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#191c1a] leading-[1.15]">
+              <h1 className="text-xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#191c1a] leading-[1.15]">
                 Packaged Commodity <span className="text-[#0f5238]">Enforcement Terminal</span>
               </h1>
 
@@ -297,57 +296,54 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 Automated 8-point statutory declaration audit under Rule 6, metric net quantity precision checks, Principal Display Panel (PDP) font ratio analysis, and Section 18/36 compounding penalty calculation.
               </p>
 
-              <div className="pt-2 flex flex-wrap items-center gap-3">
+              <div className="pt-2 w-full">
                 <button
                   onClick={() => {
                     triggerTabHaptic();
                     onScanClick();
                   }}
-                  className="bg-[#0f5238] hover:bg-[#184835] text-white font-semibold text-sm rounded-xl px-6 py-3.5 h-12 flex items-center justify-center gap-2.5 shadow-[0_4px_14px_rgba(15,82,56,0.25)] hover:shadow-[0_6px_20px_rgba(15,82,56,0.35)] transition-all duration-200 active:scale-[0.98] cursor-pointer"
+                  className="w-full sm:w-auto bg-[#0f5238] hover:bg-[#184835] text-white font-bold text-xs sm:text-sm rounded-xl px-5 py-3 flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[20px]" data-fill="1">document_scanner</span>
+                  <span className="material-symbols-outlined text-[19px]" data-fill="1">document_scanner</span>
                   <span>Start Statutory Audit</span>
                 </button>
-                <span className="text-xs text-[#707973] font-medium hidden sm:inline-block">
-                  Official inspection under Section 15 of Legal Metrology Act, 2009
-                </span>
               </div>
             </div>
 
             {/* Inspector Statutory KPI Matrix */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-3 shrink-0 lg:w-64 border-t lg:border-t-0 lg:border-l border-[#bfc9c1]/50 pt-4 lg:pt-0 lg:pl-6">
-              <div className="bg-white p-3.5 rounded-2xl border border-[#bfc9c1]/40 shadow-xs flex flex-col">
+            <div className={`grid grid-cols-2 ${isMobileMode ? 'grid-cols-2' : 'sm:grid-cols-3 lg:grid-cols-1 lg:w-64 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6'} gap-2.5 sm:gap-3 shrink-0 border-t border-[#bfc9c1]/50 pt-4`}>
+              <div className="bg-white p-3 rounded-2xl border border-[#bfc9c1]/40 shadow-xs flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#707973]">
                   Enforcement Dossiers
                 </span>
-                <span className="text-xl sm:text-2xl font-black text-[#191c1a] mt-0.5">
+                <span className="text-lg sm:text-2xl font-black text-[#191c1a] mt-0.5">
                   {recentProducts.length}
                 </span>
-                <span className="text-[11px] text-[#0f5238] font-semibold mt-0.5">
+                <span className="text-[10px] sm:text-[11px] text-[#0f5238] font-semibold mt-0.5">
                   Zone 4 Division Roster
                 </span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-2xl border border-[#bfc9c1]/40 shadow-xs flex flex-col">
+              <div className="bg-white p-3 rounded-2xl border border-[#bfc9c1]/40 shadow-xs flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#707973]">
                   Rule 6 Compliant Pass
                 </span>
-                <span className="text-xl sm:text-2xl font-black text-[#0f5238] mt-0.5">
+                <span className="text-lg sm:text-2xl font-black text-[#0f5238] mt-0.5">
                   {verifiedCount}
                 </span>
-                <span className="text-[11px] text-[#16a34a] font-medium mt-0.5">
+                <span className="text-[10px] sm:text-[11px] text-[#16a34a] font-medium mt-0.5">
                   Full statutory clearance
                 </span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-2xl border border-[#bfc9c1]/40 shadow-xs flex flex-col col-span-2 sm:col-span-1">
+              <div className={`bg-white p-3 rounded-2xl border border-[#bfc9c1]/40 shadow-xs flex flex-col ${isMobileMode ? 'col-span-2' : 'col-span-2 sm:col-span-1'}`}>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#707973]">
                   Section 36 Penalty Action
                 </span>
-                <span className="text-xl sm:text-2xl font-black text-[#93000a] mt-0.5">
+                <span className="text-lg sm:text-2xl font-black text-[#93000a] mt-0.5">
                   {reviewCount}
                 </span>
-                <span className="text-[11px] text-[#ba1a1a] font-medium mt-0.5">
+                <span className="text-[10px] sm:text-[11px] text-[#ba1a1a] font-medium mt-0.5">
                   ₹{(reviewCount * 25000).toLocaleString('en-IN')} Est. Compounding
                 </span>
               </div>
@@ -366,23 +362,23 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <span className="text-xs text-[#707973] font-medium">Authorized Enforcement</span>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className={`grid ${isMobileMode ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4'} gap-2.5 sm:gap-4`}>
               {/* Action 1: New Audit */}
               <button
                 onClick={() => {
                   triggerSelectionHaptic();
                   onScanClick();
                 }}
-                className="bg-white border border-[#bfc9c1]/50 hover:border-[#0f5238]/60 rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center gap-2.5 hover:-translate-y-1 transition-all duration-200 text-center shadow-xs hover:shadow-md group cursor-pointer"
+                className="bg-white border border-[#bfc9c1]/50 hover:border-[#0f5238]/60 rounded-2xl p-3.5 sm:p-5 flex flex-col items-center justify-center gap-2 hover:-translate-y-1 transition-all duration-200 text-center shadow-xs hover:shadow-md group cursor-pointer"
               >
-                <div className="w-12 h-12 rounded-2xl bg-[#dcfce7] border border-[#95d4b3]/60 text-[#0f5238] flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-[24px]">gavel</span>
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#dcfce7] border border-[#95d4b3]/60 text-[#0f5238] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-[22px] sm:text-[24px]">gavel</span>
                 </div>
                 <div className="flex flex-col items-center">
                   <span className="text-xs sm:text-sm font-bold text-[#191c1a] group-hover:text-[#0f5238] transition-colors">
                     Statutory Audit
                   </span>
-                  <span className="text-[11px] text-[#707973] hidden sm:block mt-0.5">
+                  <span className="text-[10px] sm:text-[11px] text-[#707973] hidden sm:block mt-0.5">
                     Execute Rule 6(1) audit
                   </span>
                 </div>
@@ -394,16 +390,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   triggerSelectionHaptic();
                   onQuickAccessFilter('requires_verification');
                 }}
-                className="bg-white border border-[#bfc9c1]/50 hover:border-[#fde68a] rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center gap-2.5 hover:-translate-y-1 transition-all duration-200 text-center shadow-xs hover:shadow-md group cursor-pointer"
+                className="bg-white border border-[#bfc9c1]/50 hover:border-[#fde68a] rounded-2xl p-3.5 sm:p-5 flex flex-col items-center justify-center gap-2 hover:-translate-y-1 transition-all duration-200 text-center shadow-xs hover:shadow-md group cursor-pointer"
               >
-                <div className="w-12 h-12 rounded-2xl bg-[#fef3c7] border border-[#fde68a] text-[#92400e] flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-[24px]">policy</span>
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#fef3c7] border border-[#fde68a] text-[#92400e] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-[22px] sm:text-[24px]">policy</span>
                 </div>
                 <div className="flex flex-col items-center">
                   <span className="text-xs sm:text-sm font-bold text-[#191c1a] group-hover:text-[#92400e] transition-colors">
-                    Non-Compliance Queue
+                    Non-Compliance
                   </span>
-                  <span className="text-[11px] text-[#707973] hidden sm:block mt-0.5">
+                  <span className="text-[10px] sm:text-[11px] text-[#707973] hidden sm:block mt-0.5">
                     Show cause &amp; seizure
                   </span>
                 </div>
@@ -419,16 +415,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     onScanClick();
                   }
                 }}
-                className="bg-white border border-[#bfc9c1]/50 hover:border-[#adc6ff] rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center gap-2.5 hover:-translate-y-1 transition-all duration-200 text-center shadow-xs hover:shadow-md group cursor-pointer"
+                className="bg-white border border-[#bfc9c1]/50 hover:border-[#adc6ff] rounded-2xl p-3.5 sm:p-5 flex flex-col items-center justify-center gap-2 hover:-translate-y-1 transition-all duration-200 text-center shadow-xs hover:shadow-md group cursor-pointer"
               >
-                <div className="w-12 h-12 rounded-2xl bg-[#d8e2ff] border border-[#adc6ff] text-[#002b75] flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-[24px]">description</span>
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#d8e2ff] border border-[#adc6ff] text-[#002b75] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-[22px] sm:text-[24px]">description</span>
                 </div>
                 <div className="flex flex-col items-center">
                   <span className="text-xs sm:text-sm font-bold text-[#191c1a] group-hover:text-[#0058be] transition-colors">
                     Form A Notice Draft
                   </span>
-                  <span className="text-[11px] text-[#707973] hidden sm:block mt-0.5">
+                  <span className="text-[10px] sm:text-[11px] text-[#707973] hidden sm:block mt-0.5">
                     Section 18 inspection memo
                   </span>
                 </div>
@@ -440,16 +436,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   triggerSelectionHaptic();
                   onQuickAccessFilter('reports');
                 }}
-                className="bg-white border border-[#bfc9c1]/50 hover:border-[#0f5238]/60 rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center gap-2.5 hover:-translate-y-1 transition-all duration-200 text-center shadow-xs hover:shadow-md group cursor-pointer"
+                className="bg-white border border-[#bfc9c1]/50 hover:border-[#0f5238]/60 rounded-2xl p-3.5 sm:p-5 flex flex-col items-center justify-center gap-2 hover:-translate-y-1 transition-all duration-200 text-center shadow-xs hover:shadow-md group cursor-pointer"
               >
-                <div className="w-12 h-12 rounded-2xl bg-[#dcfce7] border border-[#95d4b3]/60 text-[#0f5238] flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-[24px]">fact_check</span>
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#dcfce7] border border-[#95d4b3]/60 text-[#0f5238] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-[22px] sm:text-[24px]">fact_check</span>
                 </div>
                 <div className="flex flex-col items-center">
                   <span className="text-xs sm:text-sm font-bold text-[#191c1a] group-hover:text-[#0f5238] transition-colors">
                     Court Evidence Dossier
                   </span>
-                  <span className="text-[11px] text-[#707973] hidden sm:block mt-0.5">
+                  <span className="text-[10px] sm:text-[11px] text-[#707973] hidden sm:block mt-0.5">
                     Section 36 digital audit log
                   </span>
                 </div>
@@ -458,12 +454,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </section>
 
           {/* Legal Metrology Statutory Rule Matrix */}
-          <section className="bg-white border border-[#bfc9c1]/60 rounded-2xl p-5 shadow-xs">
+          <section className="bg-white border border-[#bfc9c1]/60 rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center gap-2 mb-3">
               <span className="material-symbols-outlined text-[20px] text-[#0f5238]">balance</span>
               <h3 className="text-sm font-bold text-[#191c1a]">Statutory Checklist: Rule 6(1) Mandatory Declarations</h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className={`grid ${isMobileMode ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'} gap-2.5 sm:gap-3`}>
               <div className="bg-[#f8faf6] p-3 rounded-xl border border-[#bfc9c1]/40">
                 <span className="text-xs font-bold text-[#191c1a] block">Rule 6(1)(a): Mfr Identity</span>
                 <span className="text-[11px] text-[#525e56] mt-0.5 block">Name &amp; complete address of manufacturer/packer/importer.</span>
@@ -588,7 +584,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             )}
           </div>
         ) : (
-          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-3 sm:gap-4">
+          <div className={`flex flex-col ${isMobileMode ? '' : 'lg:grid lg:grid-cols-2'} gap-3 sm:gap-4`}>
             {filteredProducts.map((product) => (
               <ProductCard
                 key={product.id}

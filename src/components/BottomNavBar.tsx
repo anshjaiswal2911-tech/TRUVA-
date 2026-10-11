@@ -7,12 +7,14 @@ interface BottomNavBarProps {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
   unreadCount?: number;
+  isMobileMode?: boolean;
 }
 
 export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   activeTab,
   setActiveTab,
   unreadCount = 0,
+  isMobileMode = false,
 }) => {
   const { isInspector } = useAuth();
 
@@ -42,7 +44,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const activeBg = isInspector ? 'bg-[#0f5238]' : 'bg-[#1d4ed8]';
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-1.5 bg-[#f8faf6]/95 backdrop-blur-lg border-t border-[#bfc9c1]/50 shadow-[0_-4px_16px_rgba(0,0,0,0.03)] pb-safe">
+    <nav className={`${isMobileMode ? 'w-full' : 'md:hidden fixed bottom-0 left-0 w-full'} z-50 flex justify-around items-center px-2 py-2 bg-[#f8faf6]/95 backdrop-blur-lg border-t border-[#bfc9c1]/50 shadow-[0_-4px_16px_rgba(0,0,0,0.03)] pb-safe shrink-0`}>
       {navItems.map((item) => {
         const isActive = activeTab === item.id;
         return (

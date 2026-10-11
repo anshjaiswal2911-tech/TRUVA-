@@ -8,6 +8,7 @@ interface FullProductReportViewProps {
   onBack: () => void;
   onOpenEvidenceDetail: () => void;
   onCompare: () => void;
+  isMobileMode?: boolean;
 }
 
 export const FullProductReportView: React.FC<FullProductReportViewProps> = ({
@@ -15,6 +16,7 @@ export const FullProductReportView: React.FC<FullProductReportViewProps> = ({
   onBack,
   onOpenEvidenceDetail,
   onCompare,
+  isMobileMode = false,
 }) => {
   const [copied, setCopied] = useState(false);
   const [activeDrilldown, setActiveDrilldown] = useState<string | null>(null);
@@ -114,9 +116,9 @@ export const FullProductReportView: React.FC<FullProductReportViewProps> = ({
       </section>
 
       {/* Overall Summary & Key Findings Grid (Bento Style) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
+      <div className={`grid grid-cols-1 ${isMobileMode ? '' : 'lg:grid-cols-3'} gap-5 sm:gap-6`}>
         {/* Status Indicators 2x2 Grid */}
-        <section className="lg:col-span-1 space-y-3">
+        <section className={`${isMobileMode ? '' : 'lg:col-span-1'} space-y-3`}>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-4 bg-[#0f5238] rounded-full"></span>
             <h2 className="text-base sm:text-lg font-bold text-[#191c1a] tracking-tight">Compliance Summary</h2>
@@ -180,7 +182,7 @@ export const FullProductReportView: React.FC<FullProductReportViewProps> = ({
         </section>
 
         {/* Key Findings List */}
-        <section className="lg:col-span-2 space-y-3">
+        <section className={`${isMobileMode ? '' : 'lg:col-span-2'} space-y-3`}>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-4 bg-[#0f5238] rounded-full"></span>
             <h2 className="text-base sm:text-lg font-bold text-[#191c1a] tracking-tight">Key Statutory Findings</h2>

@@ -5,6 +5,7 @@ import { StatusBadge } from './StatusBadge';
 import { triggerSelectionHaptic, triggerScanSuccessHaptic } from '../services/haptics';
 import { useAuth } from '../context/AuthContext';
 import { submitInspectorVerification } from '../services/apiService';
+import { InnovationSuiteModal } from './InnovationSuiteModal';
 
 interface InspectionResultViewProps {
   product: Product;
@@ -13,6 +14,7 @@ interface InspectionResultViewProps {
   onCompare: () => void;
   customImage?: string;
   isOffline?: boolean;
+  isMobileMode?: boolean;
 }
 
 const STANDARD_VIOLATION_RULES = [
@@ -31,8 +33,10 @@ export const InspectionResultView: React.FC<InspectionResultViewProps> = ({
   onCompare,
   customImage,
   isOffline = false,
+  isMobileMode = false,
 }) => {
   const { isInspector, isConsumer, user, profile } = useAuth();
+  const [isInnovationOpen, setIsInnovationOpen] = useState(false);
   
   // Inspector Manual Decision State
   const [inspectorDecision, setInspectorDecision] = useState<'GOOD_COMPLIANT' | 'BAD_NON_COMPLIANT' | null>(
@@ -192,43 +196,82 @@ export const InspectionResultView: React.FC<InspectionResultViewProps> = ({
         </div>
       )}
 
-      {/* Header Ledger Strip */}
-      <div className="hidden lg:flex items-center justify-between pb-4 border-b border-[#bfc9c1]/40">
-        <div className="flex items-center gap-2 text-xs text-[#5a6b5f]">
-          <span className="font-semibold text-[#191c1a]">
-            {isInspector ? 'Enforcement Inspection Ledger' : 'Citizen Verification Summary'}
-          </span>
-          <span>/</span>
-          <span className="font-mono text-[#0f5238] font-bold">{product.inspectionId || 'INS-2026-8841'}</span>
-          <span>/</span>
-          <span className="truncate max-w-[240px] font-medium">{product.name}</span>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={() => window.print()}
-            className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#f0f4ee] border border-[#bfc9c1]/50 text-xs font-semibold text-[#404943] hover:text-[#0f5238] flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-          >
-            <span className="material-symbols-outlined text-[16px]">print</span>
-            {isInspector ? 'Print Statutory Audit' : 'Print Summary'}
-          </button>
-          {isInspector && (
+      {/* Mobile Top Action Bar */}
+      {isMobileMode && (
+        <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#bfc9c1]/40">
+          <div className="flex items-center gap-1.5 text-xs text-[#5a6b5f] truncate">
+            <span className="font-mono text-[#0f5238] font-bold shrink-0">{product.inspectionId || 'INS-2026'}</span>
+            <span className="truncate font-medium">{product.name}</span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
-              onClick={onViewFullReport}
-              className="px-3.5 py-1.5 rounded-xl bg-[#0f5238] hover:bg-[#2d6a4f] text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+              onClick={() => setIsInnovationOpen(true)}
+              className="p-1.5 rounded-lg bg-gradient-to-r from-[#0f5238] to-[#1a6b4b] text-white text-[11px] font-bold flex items-center gap-1 shadow-xs cursor-pointer"
+              title="Innovation Suite"
             >
-              <span className="material-symbols-outlined text-[16px]">summarize</span>
-              Full Statutory Dossier
+              <span className="material-symbols-outlined text-[15px] text-[#86efac]">auto_awesome</span>
+              <span className="text-[10px]">AI Suite</span>
             </button>
-          )}
+            {isInspector && (
+              <button
+                onClick={onViewFullReport}
+                className="p-1.5 rounded-lg bg-[#0f5238] text-white text-[11px] font-bold flex items-center gap-1 shadow-xs cursor-pointer"
+                title="Full Report"
+              >
+                <span className="material-symbols-outlined text-[15px]">summarize</span>
+                <span className="text-[10px]">Dossier</span>
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Header Ledger Strip (Desktop only) */}
+      {!isMobileMode && (
+        <div className="hidden lg:flex items-center justify-between pb-4 border-b border-[#bfc9c1]/40">
+          <div className="flex items-center gap-2 text-xs text-[#5a6b5f]">
+            <span className="font-semibold text-[#191c1a]">
+              {isInspector ? 'Enforcement Inspection Ledger' : 'Citizen Verification Summary'}
+            </span>
+            <span>/</span>
+            <span className="font-mono text-[#0f5238] font-bold">{product.inspectionId || 'INS-2026-8841'}</span>
+            <span>/</span>
+            <span className="truncate max-w-[240px] font-medium">{product.name}</span>
+          </div>
+
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={() => setIsInnovationOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#0f5238] to-[#1a6b4b] hover:from-[#136344] hover:to-[#22805a] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer ring-1 ring-[#86efac]/30"
+            >
+              <span className="material-symbols-outlined text-[16px] text-[#86efac]">auto_awesome</span>
+              <span>AI Innovation Suite (SIH)</span>
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#f0f4ee] border border-[#bfc9c1]/50 text-xs font-semibold text-[#404943] hover:text-[#0f5238] flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+            >
+              <span className="material-symbols-outlined text-[16px]">print</span>
+              {isInspector ? 'Print Statutory Audit' : 'Print Summary'}
+            </button>
+            {isInspector && (
+              <button
+                onClick={onViewFullReport}
+                className="px-3.5 py-1.5 rounded-xl bg-[#0f5238] hover:bg-[#2d6a4f] text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+              >
+                <span className="material-symbols-outlined text-[16px]">summarize</span>
+                Full Statutory Dossier
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Main Workspace Layout */}
-      <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-8 items-start space-y-6 lg:space-y-0">
+      <div className={`flex flex-col ${isMobileMode ? '' : 'lg:grid lg:grid-cols-12 lg:gap-8'} items-start space-y-6 lg:space-y-0`}>
         
         {/* Left Column: Product Summary Card */}
-        <div className="w-full lg:col-span-4 flex flex-col gap-5 lg:sticky lg:top-20">
+        <div className={`w-full ${isMobileMode ? '' : 'lg:col-span-4 lg:sticky lg:top-20'} flex flex-col gap-5`}>
           <section className="bg-white border border-[#bfc9c1]/50 rounded-3xl p-5 sm:p-7 flex flex-col md:flex-row lg:flex-col gap-5 sm:gap-6 items-start md:items-center lg:items-start shadow-[0_2px_12px_rgba(0,0,0,0.03)] w-full">
             <div className="w-24 h-24 sm:w-32 sm:h-32 lg:w-full lg:h-52 shrink-0 rounded-2xl overflow-hidden border border-[#bfc9c1]/40 bg-[#f2f4f0] relative shadow-xs ring-1 ring-black/5">
               <img
@@ -299,7 +342,7 @@ export const InspectionResultView: React.FC<InspectionResultViewProps> = ({
         </div>
 
         {/* Right Column */}
-        <div className="w-full lg:col-span-8 flex flex-col gap-6">
+        <div className={`w-full ${isMobileMode ? '' : 'lg:col-span-8'} flex flex-col gap-6`}>
 
           {/* ========================================================================= */}
           {/* 1. CONSUMER VIEW: Simple, highly readable, no technical debug dumps */}
@@ -468,9 +511,11 @@ export const InspectionResultView: React.FC<InspectionResultViewProps> = ({
                     <div>
                       <strong className="text-[#0f172a]">Unit Sale Price (USP) Metric: </strong>
                       <span>
-                        {product.volume || product.quantity
-                          ? `Calculated standard pricing based on ${product.volume || product.quantity} for ₹${product.mrp}. Compare across brands to ensure fair value.`
-                          : 'Mandatory metric unit pricing under Rule 6.'}
+                        {product.unitSalePrice
+                          ? `Calculated unit sale price: ${product.unitSalePrice}. Mandatory metric unit pricing under Legal Metrology Rule 6.`
+                          : product.mrp && !product.mrp.toLowerCase().includes('declared')
+                          ? `Calculated standard pricing based on ${product.volume || product.quantity || 'package'} for ${product.mrp?.startsWith('₹') ? product.mrp : `₹${product.mrp}`}. Compare across brands to ensure fair value.`
+                          : `Mandatory metric unit pricing declared on statutory batch panel under Rule 6.`}
                       </span>
                     </div>
                   </div>
@@ -486,6 +531,35 @@ export const InspectionResultView: React.FC<InspectionResultViewProps> = ({
                       Jago Grahak Jago
                     </span>
                   </div>
+                </div>
+              </section>
+
+              {/* SIH Innovation Capabilities Banner */}
+              <section className="bg-gradient-to-br from-[#f0fdf4] via-white to-[#ecfdf5] border-2 border-[#86efac]/80 rounded-3xl p-5 sm:p-7 shadow-xs space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-[#0f5238] text-white flex items-center justify-center shadow-xs">
+                      <span className="material-symbols-outlined text-[22px] text-[#86efac]">auto_awesome</span>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-[#0f5238] flex items-center gap-2">
+                        <span>Advanced Legal Metrology Innovation Suite</span>
+                        <span className="bg-[#0f5238] text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">
+                          SIH 2026
+                        </span>
+                      </h4>
+                      <p className="text-xs text-[#404943]">
+                        Shrinkflation Tracker • Rule 9 Font Geometry • Section 39 Notice Generator • Court Crypto Trail
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsInnovationOpen(true)}
+                    className="px-4 py-2 bg-[#0f5238] hover:bg-[#1a6b4b] text-white text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Launch Innovations</span>
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </button>
                 </div>
               </section>
             </div>
@@ -523,7 +597,7 @@ export const InspectionResultView: React.FC<InspectionResultViewProps> = ({
                 </div>
 
                 {/* Modules Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+                <div className={`grid ${isMobileMode ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'} gap-3 sm:gap-4`}>
                   <ModuleCard
                     module={product.modules.declarations}
                     onClick={() => onSelectModule('declarations')}
@@ -571,7 +645,7 @@ export const InspectionResultView: React.FC<InspectionResultViewProps> = ({
                   <label className="text-xs font-bold uppercase tracking-wider text-[#404943] block mb-2.5">
                     IS THIS PRODUCT COMPLIANT? (MANUAL DETERMINATION)
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className={`grid ${isMobileMode ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'} gap-3 sm:gap-4`}>
                     {/* GOOD OPTION */}
                     <button
                       type="button"
@@ -950,6 +1024,13 @@ export const InspectionResultView: React.FC<InspectionResultViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* SIH Advanced Innovation Suite Modal */}
+      <InnovationSuiteModal
+        isOpen={isInnovationOpen}
+        onClose={() => setIsInnovationOpen(false)}
+        product={product}
+      />
     </div>
   );
 };

@@ -1,0 +1,19 @@
+{
+  "short_name": "TRUVA",
+  "name": "TRUVA | National Legal Metrology & Consumer Protection",
+  "description": "Statutory packaging compliance, mandatory declaration OCR, and instant grievance filing under Legal Metrology Act, 2009.",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230f5238'><path d='M12 2L2 7l10 5 10-5-10-5z'/><path d='M2 17l10 5 10-5'/><path d='M2 12l10 5 10-5'/></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f5238",
+  "theme_color": "#0f5238",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/"
+}

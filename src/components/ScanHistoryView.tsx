@@ -9,6 +9,7 @@ interface ScanHistoryViewProps {
   onScanNew: () => void;
   onRefreshProducts?: (updatedProducts: Product[]) => void;
   isOffline?: boolean;
+  isMobileMode?: boolean;
 }
 
 export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
@@ -17,6 +18,7 @@ export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
   onScanNew,
   onRefreshProducts,
   isOffline = false,
+  isMobileMode = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'All' | 'Compliant' | 'Potential Violation' | 'Requires Verification'>('All');
@@ -219,7 +221,7 @@ export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
       </div>
 
       {/* Scan History List */}
-      <div className="flex flex-col lg:grid lg:grid-cols-2 gap-3.5 sm:gap-4">
+      <div className={`flex flex-col ${isMobileMode ? '' : 'lg:grid lg:grid-cols-2'} gap-3.5 sm:gap-4`}>
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
             <div key={product.id} className="relative group">

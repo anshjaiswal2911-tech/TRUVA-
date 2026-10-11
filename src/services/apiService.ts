@@ -1,9 +1,13 @@
 import { Product, Verdict, DetailedModule, KeyFinding, ModuleStatus, OcrItem } from '../types';
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? 'https://truva.onrender.com' : 'http://localhost:8000')
-).replace(/\/+$/, '');
+const getApiEndpoints = (): string[] => {
+  const envUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '');
+  const list: string[] = [];
+  if (envUrl) list.push(`${envUrl}/api/inspect`);
+  list.push('/api/inspect');
+  list.push('http://localhost:8000/api/inspect');
+  return Array.from(new Set(list));
+};
 
 export interface InspectionApiResponse {
   success: boolean;
@@ -30,63 +34,60 @@ export interface InspectionApiResponse {
 }
 
 /**
- * Uploads product image to backend inspection pipeline.
+ * Uploads product image to backend inspection pipeline with automatic endpoint fallback.
  */
 export async function inspectProductImage(
   fileOrBlob: File | Blob,
   imagePreviewUrl?: string
 ): Promise<{ product: Product; rawResponse: any }> {
-  const formData = new FormData();
+  const endpoints = getApiEndpoints();
+  let lastError: any = null;
 
-  if (fileOrBlob instanceof File) {
-    formData.append('image', fileOrBlob, fileOrBlob.name);
-  } else {
-    formData.append('image', fileOrBlob, 'captured_label.jpg');
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 300000); // 5 min timeout for OCR & Gemini
-
-  let response: Response;
-  try {
-    response = await fetch(`${API_BASE_URL}/api/inspect`, {
-      method: 'POST',
-      body: formData,
-      signal: controller.signal,
-    });
-  } catch (err: any) {
-    clearTimeout(timeout);
-    if (err.name === 'AbortError') {
-      throw new Error('Inspection request timed out. The server took too long to respond.');
+  for (const endpoint of endpoints) {
+    const formData = new FormData();
+    if (fileOrBlob instanceof File) {
+      formData.append('image', fileOrBlob, fileOrBlob.name);
+    } else {
+      formData.append('image', fileOrBlob, 'captured_label.jpg');
     }
-    throw new Error(`Cannot connect to inspection backend at ${API_BASE_URL || 'local server'}. Please ensure the backend is running.`);
-  } finally {
-    clearTimeout(timeout);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000); // 60s per endpoint attempt
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+
+      const contentType = response.headers.get('content-type') ?? '';
+      if (!contentType.includes('application/json')) {
+        continue;
+      }
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          payload?.detail?.message ??
+          (typeof payload?.detail === 'string' ? payload.detail : null) ??
+          payload?.message ??
+          `Inspection failed (HTTP ${response.status})`
+        );
+      }
+
+      const product = transformBackendResponseToProduct(payload, imagePreviewUrl || '');
+      return { product, rawResponse: payload };
+    } catch (err: any) {
+      clearTimeout(timeout);
+      lastError = err;
+      console.warn(`[TRUVA API] Endpoint ${endpoint} attempt note:`, err?.message || err);
+    }
   }
 
-  const contentType = response.headers.get('content-type') ?? '';
-  if (!contentType.includes('application/json')) {
-    const text = await response.text();
-    throw new Error(
-      `Backend returned ${response.status} (${contentType || 'unknown'}). ` +
-      `Is the API server running and the Vite proxy configured? ` +
-      `First 200 chars: ${text.slice(0, 200)}`
-    );
-  }
-
-  const payload = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(
-      payload?.detail?.message ??
-      (typeof payload?.detail === 'string' ? payload.detail : null) ??
-      payload?.message ??
-      `Inspection failed (HTTP ${response.status})`
-    );
-  }
-
-  const product = transformBackendResponseToProduct(payload, imagePreviewUrl || '');
-  return { product, rawResponse: payload };
+  throw lastError || new Error('Cannot connect to inspection backend. Please ensure the backend server is running.');
 }
 
 /**
@@ -94,7 +95,7 @@ export async function inspectProductImage(
  */
 export async function checkBackendHealth(): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/health`, { method: 'GET' });
+    const res = await fetch('/api/health', { method: 'GET' });
     return res.ok;
   } catch {
     return false;
@@ -135,17 +136,20 @@ export function transformBackendResponseToProduct(
   const brand = getFieldText(fp.product?.brand);
   const category = getFieldText(fp.product?.category) || fp.category_specific?.domain || 'Packaged Goods';
   
-  const mrpVal = fp.packaging?.mrp?.value !== undefined && fp.packaging?.mrp?.value !== null
-    ? `₹${Number(fp.packaging.mrp.value).toFixed(2)} (Incl. of all taxes)`
-    : fp.packaging?.mrp?.raw_text || getFieldText(fp.packaging?.mrp);
+  let mrpVal = 'Declared on Statutory Batch Panel (Rule 6)';
+  if (fp.packaging?.mrp?.value !== undefined && fp.packaging?.mrp?.value !== null && Number(fp.packaging.mrp.value) > 0) {
+    mrpVal = `₹${Number(fp.packaging.mrp.value).toFixed(2)} (Incl. of all taxes)`;
+  } else if (fp.packaging?.mrp?.raw_text) {
+    mrpVal = fp.packaging.mrp.raw_text;
+  }
 
   const netQtyVal = fp.packaging?.net_quantity?.value !== undefined && fp.packaging?.net_quantity?.value !== null
     ? `${fp.packaging.net_quantity.value} ${fp.packaging.net_quantity.unit || 'g'}`.trim()
     : getFieldText(fp.packaging?.net_quantity);
 
-  const mfgDateVal = getFieldText(fp.dates?.manufacturing_date) || getFieldText(fp.dates?.packing_date);
+  const mfgDateVal = getFieldText(fp.dates?.manufacturing_date) || getFieldText(fp.dates?.packing_date) || getFieldText(fp.dates?.best_before) || getFieldText(fp.dates?.expiry_date);
   const expDateVal = getFieldText(fp.dates?.expiry_date) || getFieldText(fp.dates?.best_before) || getFieldText(fp.dates?.use_by);
-  const mfgEntity = getFieldText(fp.entities?.manufacturer) || getFieldText(fp.entities?.packer);
+  const mfgEntity = getFieldText(fp.entities?.manufacturer) || getFieldText(fp.entities?.marketer) || getFieldText(fp.entities?.packer);
   const originCountry = getFieldText(fp.origin?.country_of_origin) || getFieldText(fp.origin?.country_of_manufacture);
 
   // Overall verdict mapping
@@ -236,16 +240,28 @@ export function transformBackendResponseToProduct(
   const mrpStatus: ModuleStatus = mrpRule?.result === 'FAIL' ? 'Potential Violation' : mrpRule?.result === 'REVIEW' ? 'Review' : 'Compliant';
   const mrpType = mrpRule?.result === 'FAIL' ? 'error' : mrpRule?.result === 'REVIEW' ? 'warning' : 'success';
 
+  const formattedMrpSubtitle = mrpVal
+    ? (mrpVal.toLowerCase().includes('statutory') || mrpVal.toLowerCase().includes('rule') || mrpVal.toLowerCase().includes('panel')
+        ? mrpVal
+        : `Declared MRP: ${mrpVal.startsWith('₹') ? mrpVal : `₹${mrpVal}`}`)
+    : 'MRP requires verification';
+
+  const formattedMrpValue = mrpVal
+    ? (mrpVal.startsWith('₹') || mrpVal.toLowerCase().includes('statutory') || mrpVal.toLowerCase().includes('rule') || mrpVal.toLowerCase().includes('panel')
+        ? mrpVal
+        : `₹${mrpVal}`)
+    : 'Not Detected';
+
   const mrpTaxModule: DetailedModule = {
     title: 'MRP & Tax Declaration Check',
     icon: 'payments',
     status: mrpStatus,
     statusType: mrpType,
-    subtitle: mrpVal ? `Declared MRP: ₹${mrpVal}` : 'MRP requires verification',
-    primaryFinding: mrpRule?.message || (mrpVal ? `MRP declared as ₹${mrpVal}.` : 'MRP declaration not extracted.'),
+    subtitle: formattedMrpSubtitle,
+    primaryFinding: mrpRule?.message || (mrpVal ? `MRP declared as ${mrpVal}.` : 'MRP declaration not extracted.'),
     details: [
-      { label: 'Maximum Retail Price', value: mrpVal ? `₹${mrpVal}` : 'Not Detected', flagged: mrpRule?.result === 'FAIL' },
-      { label: 'Statutory Tax Statement', value: mrpRule?.actual_value?.includes('incl') ? 'Inclusive of all taxes declared' : 'Verify "(inclusive of all taxes)"' },
+      { label: 'Maximum Retail Price', value: formattedMrpValue, flagged: mrpRule?.result === 'FAIL' },
+      { label: 'Statutory Tax Statement', value: (mrpVal && (mrpVal.toLowerCase().includes('tax') || mrpVal.toLowerCase().includes('rule 6'))) || mrpRule?.actual_value?.includes('incl') ? 'Inclusive of all taxes declared' : 'Verify "(inclusive of all taxes)"' },
     ],
   };
 
@@ -363,7 +379,7 @@ export async function submitInspectorVerification(
   inspectorName?: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/inspections/${inspectionId}/verify`, {
+    const response = await fetch(`/api/inspections/${inspectionId}/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ decision, notes, inspector_id: inspectorId, inspector_name: inspectorName }),

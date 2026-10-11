@@ -2,6 +2,91 @@ import { Product, NotificationItem } from '../types';
 
 export const MOCK_PRODUCTS: Product[] = [
   {
+    id: 'fortune-refined-oil-1l',
+    inspectionId: 'INS-2026-F0RT72',
+    name: 'Avol Fortune Refined Oil',
+    subtitle: 'Edible Oils & Fats • Pure Refined Cooking Oil',
+    category: 'Edible Oil & Packaged Commodity',
+    barcode: '8906007281092',
+    mrp: '₹ 210.00 (incl. of all taxes)',
+    volume: '1 L',
+    quantity: '1 L (Net Quantity Verified)',
+    mfgDate: '12/04/2024',
+    expDate: '11/10/2025',
+    countryOfOrigin: 'India',
+    manufacturerName: 'Adani Wilmar Limited',
+    inspectionDate: '11 Oct 2026',
+    imageUrl: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=600&q=80',
+    imageAlt: 'Fortune Refined Oil Pouch Pack',
+    overallVerdict: 'Compliant',
+    overallSummary: {
+      declarations: { status: 'Compliant', label: 'Mandatory Declarations', icon: 'gavel', type: 'success' },
+      netQuantity: { status: 'Compliant', label: 'Net Quantity Verification', icon: 'scale', type: 'success' },
+      mrpTax: { status: 'Compliant', label: 'MRP Tax Inclusion', icon: 'payments', type: 'success' },
+      evidence: { status: 'Verified', label: 'Rule Compliance Evidence', icon: 'assignment', type: 'success' }
+    },
+    keyFindings: [
+      { id: '1', text: 'All mandatory declarations under Legal Metrology Rule 6(1) verified.', type: 'compliant' },
+      { id: '2', text: 'Net Quantity: 1 L declared in standard SI metric units (Schedule II compliant).', type: 'compliant' },
+      { id: '3', text: 'MRP ₹ 210.00 declared inclusive of all taxes.', type: 'compliant' },
+      { id: '4', text: 'Manufactured by Adani Wilmar Limited with complete packing address & consumer helpline.', type: 'compliant' },
+    ],
+    modules: {
+      declarations: {
+        title: 'Mandatory Declarations Check',
+        icon: 'gavel',
+        status: 'Compliant',
+        statusType: 'success',
+        subtitle: 'Rule 6(1) Statutory Compliance',
+        primaryFinding: 'Name, address of manufacturer, commodity name, and consumer care details present.',
+        details: [
+          { label: 'Commodity Name', value: 'Avol Fortune Refined Oil' },
+          { label: 'Manufacturer / Packer', value: 'Adani Wilmar Limited' },
+          { label: 'Manufacture Date', value: '12/04/2024' },
+          { label: 'Expiry Date', value: '11/10/2025' },
+          { label: 'Country of Origin', value: 'Made in India' },
+        ]
+      },
+      netQuantity: {
+        title: 'Net Quantity Verification',
+        icon: 'scale',
+        status: 'Compliant',
+        statusType: 'success',
+        subtitle: 'Rule 11 & Schedule II Metric Compliance',
+        primaryFinding: 'Declared Net Quantity 1 L conforms to Schedule II font height and permissible limits.',
+        details: [
+          { label: 'Declared Net Quantity', value: '1 L' },
+          { label: 'Metric Symbol', value: 'L (Compliant)' },
+          { label: 'Font Height', value: '≥4.0 mm' },
+        ]
+      },
+      mrpTax: {
+        title: 'MRP & Tax Declaration Check',
+        icon: 'payments',
+        status: 'Compliant',
+        statusType: 'success',
+        subtitle: 'Rule 6(1)(e) Compliance',
+        primaryFinding: 'MRP stated as ₹ 210.00 inclusive of all taxes.',
+        details: [
+          { label: 'Maximum Retail Price', value: '₹ 210.00' },
+          { label: 'Tax Statement', value: 'Inclusive of all taxes' },
+        ]
+      },
+      evidence: {
+        title: 'Statutory Evidence & Rule Audit',
+        icon: 'assignment',
+        status: 'Compliant',
+        statusType: 'success',
+        subtitle: 'Legal Metrology Rules, 2011',
+        primaryFinding: 'Passes 8/8 statutory metrology verification rules.',
+        details: [
+          { label: 'Statutory Act', value: 'Legal Metrology Act, 2009' },
+          { label: 'Status', value: 'Likely Compliant' },
+        ]
+      }
+    }
+  },
+  {
     id: 'fmcg-packaged-basket',
     inspectionId: 'INS-2026-8841',
     name: 'Indian FMCG & Packaged Groceries Assortment',
