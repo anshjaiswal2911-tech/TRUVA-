@@ -17,7 +17,6 @@ import { NotificationsView } from './components/NotificationsView';
 import { SettingsView } from './components/SettingsView';
 import { SystemStatesView } from './components/SystemStatesView';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { LandingPage } from './components/LandingPage';
 import { AuthGateModal } from './components/AuthGateModal';
 
 type ViewMode = 'main' | 'processing' | 'result' | 'full_report' | 'evidence_detail';
@@ -365,20 +364,6 @@ function TruvaApp() {
         {/* Standard Tab Navigation Views */}
         {viewMode === 'main' && (
           <>
-            {activeTab === 'landing' && (
-              <LandingPage
-                onLaunchApp={(role) => {
-                  if (role) switchRoleDemo(role);
-                  setActiveTab('home');
-                }}
-                onOpenLogin={() => setActiveTab('home')}
-                onQuickScanProduct={(p) => {
-                  setSelectedProduct(p);
-                  setViewMode('result');
-                }}
-              />
-            )}
-
             {activeTab === 'home' && (
               <HomeView
                 recentProducts={allProducts.slice(0, 4)}
