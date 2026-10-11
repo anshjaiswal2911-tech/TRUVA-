@@ -1,3 +1,6 @@
+import os
+import sys
+from typing import Any, Dict, List, Optional, Tuple
 
 def generate_fallback_ocr_from_image(image_path: str) -> List[Dict[str, Any]]:
     """Extracts visual text evidence regions using OpenCV image dimensions & Rule 6 metrology templates."""
