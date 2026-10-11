@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Product, ActiveTab } from './types';
 import { MOCK_PRODUCTS, MOCK_NOTIFICATIONS } from './data/mockProducts';
 import { getCachedProducts, saveScannedProduct } from './services/scanCache';
@@ -23,7 +23,18 @@ import { AuthGateModal } from './components/AuthGateModal';
 type ViewMode = 'main' | 'processing' | 'result' | 'full_report' | 'evidence_detail';
 
 function TruvaApp() {
-  const { isAuthenticated, isInspector, isConsumer, isLoading, signInInspector, signInConsumerWithEmail, switchRoleDemo, signOut } = useAuth();
+  const {
+    isAuthenticated,
+    isInspector,
+    isConsumer,
+    isLoading,
+    signInInspector,
+    signInConsumerWithEmail,
+    switchRoleDemo,
+    signOut,
+    user,
+    profile,
+  } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -60,11 +71,16 @@ function TruvaApp() {
     window.addEventListener('hashchange', handleUrlRoute);
     return () => window.removeEventListener('hashchange', handleUrlRoute);
   }, []);
-  
-  // Persistent Scan History Cache via localStorage (real scans only)
-  const [allProducts, setAllProducts] = useState<Product[]>(() => getCachedProducts());
+
+  // Compute unique identity string for personal isolated scan history
+  const currentUserId = useMemo(() => {
+    return user?.id || profile?.id || profile?.email || (isAuthenticated ? 'authenticated_user' : 'guest');
+  }, [user?.id, profile?.id, profile?.email, isAuthenticated]);
+
+  // Persistent Scan History Cache via localStorage (isolated per authenticated user)
+  const [allProducts, setAllProducts] = useState<Product[]>(() => getCachedProducts(currentUserId));
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(() => {
-    const initialCached = getCachedProducts();
+    const initialCached = getCachedProducts(currentUserId);
     return initialCached.length > 0 ? initialCached[0] : null;
   });
   const [customImage, setCustomImage] = useState<string | undefined>(undefined);
@@ -76,6 +92,20 @@ function TruvaApp() {
   // Comparison State
   const [compareProductA, setCompareProductA] = useState<Product | undefined>(() => allProducts[0]);
   const [compareProductB, setCompareProductB] = useState<Product | undefined>(() => allProducts[1]);
+
+  // Sync products and active selections whenever current logged-in user changes
+  useEffect(() => {
+    const userProducts = getCachedProducts(currentUserId);
+    setAllProducts(userProducts);
+    setSelectedProduct((prev) => {
+      if (prev && userProducts.some((p) => p.id === prev.id)) {
+        return prev;
+      }
+      return userProducts.length > 0 ? userProducts[0] : null;
+    });
+    setCompareProductA(userProducts[0] || undefined);
+    setCompareProductB(userProducts[1] || userProducts[0] || undefined);
+  }, [currentUserId]);
 
   // Unread notification count
   const unreadNotifs = MOCK_NOTIFICATIONS.filter((n) => n.isUnread).length;
@@ -102,11 +132,8 @@ function TruvaApp() {
       setSelectedProduct(productToSave);
       setViewMode('result');
       
-      setAllProducts((prev) =>
-        [productToSave, ...prev.filter((p) => p.id !== productToSave.id && p.inspectionId !== productToSave.inspectionId)].slice(0, 20)
-      );
-
-      saveScannedProduct(productToSave);
+      const updated = saveScannedProduct(productToSave, currentUserId);
+      setAllProducts(updated);
     } else {
       setViewMode('main');
     }
@@ -439,6 +466,7 @@ function TruvaApp() {
             {activeTab === 'history' && (
               <ScanHistoryView
                 products={allProducts}
+                userId={currentUserId}
                 isOffline={isOffline}
                 isMobileMode={isMobileMode}
                 onRefreshProducts={(updated) => setAllProducts(updated)}
@@ -446,7 +474,10 @@ function TruvaApp() {
                   setSelectedProduct(product);
                   setViewMode('result');
                 }}
-                onScanNew={() => setActiveTab('scan')}
+                onScanNew={() => {
+                  setActiveTab('scan');
+                  setViewMode('main');
+                }}
               />
             )}
 
@@ -454,6 +485,7 @@ function TruvaApp() {
               <ProductCompareView
                 productA={compareProductA}
                 productB={compareProductB}
+                availableProducts={allProducts}
                 isMobileMode={isMobileMode}
                 onSelectProductA={setCompareProductA}
                 onSelectProductB={setCompareProductB}
@@ -471,6 +503,7 @@ function TruvaApp() {
 
             {activeTab === 'settings' && (
               <SettingsView
+                userId={currentUserId}
                 onRefreshProducts={(updated) => setAllProducts(updated)}
                 onSignOut={() => {
                   setActiveTab('home');

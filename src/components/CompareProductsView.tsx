@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Product } from '../types';
+import { MOCK_PRODUCTS } from '../data/mockProducts';
 import { useAuth } from '../context/AuthContext';
 import { triggerSelectionHaptic } from '../services/haptics';
 
@@ -13,11 +14,12 @@ export const CompareProductsView: React.FC<CompareProductsViewProps> = ({
   onSelectProduct,
 }) => {
   const { isInspector } = useAuth();
-  const [prodAId, setProdAId] = useState<string>(products[0]?.id || '');
-  const [prodBId, setProdBId] = useState<string>(products[1]?.id || products[0]?.id || '');
+  const effectiveProducts = products.length > 0 ? products : MOCK_PRODUCTS;
+  const [prodAId, setProdAId] = useState<string>(effectiveProducts[0]?.id || '');
+  const [prodBId, setProdBId] = useState<string>(effectiveProducts[1]?.id || effectiveProducts[0]?.id || '');
 
-  const prodA = products.find((p) => p.id === prodAId) || products[0];
-  const prodB = products.find((p) => p.id === prodBId) || products[1] || products[0];
+  const prodA = effectiveProducts.find((p) => p.id === prodAId) || effectiveProducts[0];
+  const prodB = effectiveProducts.find((p) => p.id === prodBId) || effectiveProducts[1] || effectiveProducts[0];
 
   const activeColor = isInspector ? 'text-[#0f5238]' : 'text-[#0058be]';
   const activeBg = isInspector ? 'bg-[#0f5238]' : 'bg-[#0058be]';

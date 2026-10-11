@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Product } from '../types';
 import { ProductCard } from './ProductCard';
 import { getCacheStats, clearScanCache, resetCacheToDefaults, deleteCachedProduct } from '../services/scanCache';
+import { useAuth } from '../context/AuthContext';
 
 interface ScanHistoryViewProps {
   products: Product[];
+  userId?: string;
   onSelectProduct: (product: Product) => void;
   onScanNew: () => void;
   onRefreshProducts?: (updatedProducts: Product[]) => void;
@@ -14,20 +16,23 @@ interface ScanHistoryViewProps {
 
 export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
   products,
+  userId,
   onSelectProduct,
   onScanNew,
   onRefreshProducts,
   isOffline = false,
   isMobileMode = false,
 }) => {
+  const { user, profile } = useAuth();
+  const effectiveUserId = userId || user?.id || profile?.id || profile?.email || 'guest';
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'All' | 'Compliant' | 'Potential Violation' | 'Requires Verification'>('All');
   const [showManageCache, setShowManageCache] = useState(false);
-  const cacheStats = getCacheStats();
+  const cacheStats = getCacheStats(effectiveUserId);
 
   const handleClearCache = () => {
     if (window.confirm('Clear all cached scan results from local storage?')) {
-      const empty = clearScanCache();
+      const empty = clearScanCache(effectiveUserId);
       if (onRefreshProducts) {
         onRefreshProducts(empty);
       }
@@ -35,7 +40,7 @@ export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
   };
 
   const handleResetDefaults = () => {
-    const defaults = resetCacheToDefaults();
+    const defaults = resetCacheToDefaults(effectiveUserId);
     if (onRefreshProducts) {
       onRefreshProducts(defaults);
     }
@@ -43,7 +48,7 @@ export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
 
   const handleDeleteItem = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
-    const updated = deleteCachedProduct(productId);
+    const updated = deleteCachedProduct(productId, effectiveUserId);
     if (onRefreshProducts) {
       onRefreshProducts(updated);
     }
@@ -247,13 +252,22 @@ export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
             <div className="space-y-1">
               <h3 className="text-base font-bold text-[#191c1a]">No matching inspections found</h3>
               <p className="text-xs text-[#404943] max-w-sm leading-relaxed">
-                {searchQuery ? `No archived commodity dossiers match "${searchQuery}" under ${activeFilter}.` : 'No inspections are currently archived in the offline storage cache.'}
+                {searchQuery
+                  ? `No archived commodity dossiers match "${searchQuery}" under ${activeFilter}.`
+                  : 'No inspections are currently archived in your personal scan history.'}
               </p>
             </div>
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+              <button
+                onClick={onScanNew}
+                className="text-xs font-bold bg-[#0f5238] text-white px-4 py-2 rounded-xl hover:bg-[#184835] transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[16px]">photo_camera</span>
+                <span>Scan New Package</span>
+              </button>
               <button
                 onClick={handleResetDefaults}
-                className="text-xs font-bold bg-[#0f5238] text-white px-4 py-2 rounded-xl hover:bg-[#2d6a4f] transition-all cursor-pointer shadow-sm"
+                className="text-xs font-semibold bg-[#eef1ed] hover:bg-[#d8deda] text-[#0f5238] px-3.5 py-2 rounded-xl border border-[#bfc9c1]/80 transition-all cursor-pointer"
               >
                 Load Sample Dossiers
               </button>

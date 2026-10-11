@@ -145,61 +145,85 @@ export const InspectorDashboard: React.FC<InspectorDashboardProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {recentProducts.map((prod) => (
-            <div
-              key={prod.id}
+        {recentProducts.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-[#bfc9c1]/60 p-8 sm:p-12 text-center flex flex-col items-center justify-center gap-3.5 shadow-xs">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#0f5238] flex items-center justify-center border border-emerald-100">
+              <span className="material-symbols-outlined text-[30px]">policy</span>
+            </div>
+            <div className="max-w-md space-y-1">
+              <h3 className="text-base font-bold text-[#191c1a]">No Active Seizure Dossiers</h3>
+              <p className="text-xs text-[#707973] leading-relaxed">
+                No commodity inspections recorded under this officer profile yet. Click &quot;Audit New Commodity&quot; to execute your first statutory inspection.
+              </p>
+            </div>
+            <button
               onClick={() => {
                 triggerSelectionHaptic();
-                onSelectProduct(prod);
+                onScanClick();
               }}
-              className="bg-white rounded-2xl border border-[#bfc9c1]/60 p-4 shadow-xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+              className="mt-1 px-5 py-2.5 bg-[#0f5238] hover:bg-[#184835] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs"
             >
-              <div>
-                <div className="relative w-full h-44 rounded-xl bg-gray-900 overflow-hidden mb-3">
-                  <img
-                    src={prod.imageUrl}
-                    alt={prod.name}
-                    className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 font-mono text-[9px] text-emerald-400 border border-emerald-500/30">
-                    {prod.inspectionId || 'INSP-2026'}
+              <span className="material-symbols-outlined text-[18px]">photo_camera</span>
+              <span>Audit First Commodity</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {recentProducts.map((prod) => (
+              <div
+                key={prod.id}
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  onSelectProduct(prod);
+                }}
+                className="bg-white rounded-2xl border border-[#bfc9c1]/60 p-4 shadow-xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="relative w-full h-44 rounded-xl bg-gray-900 overflow-hidden mb-3">
+                    <img
+                      src={prod.imageUrl}
+                      alt={prod.name}
+                      className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 font-mono text-[9px] text-emerald-400 border border-emerald-500/30">
+                      {prod.inspectionId || 'INSP-2026'}
+                    </div>
+                    <span className={`absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase shadow-xs ${
+                      prod.overallVerdict === 'Compliant'
+                        ? 'bg-emerald-600 text-white'
+                        : prod.overallVerdict === 'Potential Violation'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-amber-500 text-black'
+                    }`}>
+                      {prod.overallVerdict}
+                    </span>
                   </div>
-                  <span className={`absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase shadow-xs ${
-                    prod.overallVerdict === 'Compliant'
-                      ? 'bg-emerald-600 text-white'
-                      : prod.overallVerdict === 'Potential Violation'
-                      ? 'bg-red-600 text-white'
-                      : 'bg-amber-500 text-black'
-                  }`}>
-                    {prod.overallVerdict}
+
+                  <div className="text-[10.5px] font-mono font-bold text-[#0f5238] uppercase tracking-wider mb-1">
+                    BARCODE: {prod.barcode}
+                  </div>
+                  <h3 className="font-extrabold text-sm text-[#191c1a] group-hover:text-[#0f5238] transition-colors line-clamp-1">
+                    {prod.name}
+                  </h3>
+                  <p className="text-xs text-[#707973] line-clamp-1 mt-0.5">
+                    Packer: {prod.manufacturerName || 'Verified Manufacturer'}
+                  </p>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-[#e2e8e0] flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-extrabold text-sm text-[#191c1a]">{prod.mrp || '₹140.00'}</span>
+                    <span className="text-[10px] text-[#707973] ml-1">({prod.quantity || prod.volume})</span>
+                  </div>
+                  <span className="text-[#0f5238] font-bold text-[11px] flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                    <span>Open Dossier</span>
+                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                   </span>
                 </div>
-
-                <div className="text-[10.5px] font-mono font-bold text-[#0f5238] uppercase tracking-wider mb-1">
-                  BARCODE: {prod.barcode}
-                </div>
-                <h3 className="font-extrabold text-sm text-[#191c1a] group-hover:text-[#0f5238] transition-colors line-clamp-1">
-                  {prod.name}
-                </h3>
-                <p className="text-xs text-[#707973] line-clamp-1 mt-0.5">
-                  Packer: {prod.manufacturerName || 'Verified Manufacturer'}
-                </p>
               </div>
-
-              <div className="mt-4 pt-3 border-t border-[#e2e8e0] flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-extrabold text-sm text-[#191c1a]">{prod.mrp || '₹140.00'}</span>
-                  <span className="text-[10px] text-[#707973] ml-1">({prod.quantity || prod.volume})</span>
-                </div>
-                <span className="text-[#0f5238] font-bold text-[11px] flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
-                  <span>Open Dossier</span>
-                  <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

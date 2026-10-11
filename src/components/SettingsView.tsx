@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getCacheStats, clearScanCache, resetCacheToDefaults } from '../services/scanCache';
 import {
   isVibrationSupported,
@@ -13,18 +13,24 @@ import { useAuth } from '../context/AuthContext';
 
 interface SettingsViewProps {
   onSignOut: () => void;
+  userId?: string;
   onRefreshProducts?: (products: Product[]) => void;
 }
 
-export const SettingsView: React.FC<SettingsViewProps> = ({ onSignOut, onRefreshProducts }) => {
-  const { profile, isInspector, isConsumer, signOut, switchRoleDemo } = useAuth();
+export const SettingsView: React.FC<SettingsViewProps> = ({ onSignOut, userId, onRefreshProducts }) => {
+  const { user, profile, isInspector, isConsumer, signOut, switchRoleDemo } = useAuth();
+  const effectiveUserId = userId || user?.id || profile?.id || profile?.email || 'guest';
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [appearanceMode, setAppearanceMode] = useState<'system' | 'light' | 'dark'>('system');
   const [notifsEnabled, setNotifsEnabled] = useState(true);
   const [hapticsEnabled, setHapticsState] = useState(() => isHapticsEnabled());
   const [vibrationSupported] = useState(() => isVibrationSupported());
-  const [cacheStats, setCacheStats] = useState(() => getCacheStats());
+  const [cacheStats, setCacheStats] = useState(() => getCacheStats(effectiveUserId));
   const [lastHapticTriggered, setLastHapticTriggered] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCacheStats(getCacheStats(effectiveUserId));
+  }, [effectiveUserId]);
 
   const handleToggleHaptics = (enabled: boolean) => {
     setHapticsState(enabled);
@@ -50,15 +56,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onSignOut, onRefresh
 
   const handleClearCache = () => {
     if (window.confirm('Clear all cached scan dossiers stored on this device?')) {
-      const empty = clearScanCache();
-      setCacheStats(getCacheStats());
+      const empty = clearScanCache(effectiveUserId);
+      setCacheStats(getCacheStats(effectiveUserId));
       if (onRefreshProducts) onRefreshProducts(empty);
     }
   };
 
   const handleResetCache = () => {
-    const samples = resetCacheToDefaults();
-    setCacheStats(getCacheStats());
+    const samples = resetCacheToDefaults(effectiveUserId);
+    setCacheStats(getCacheStats(effectiveUserId));
     if (onRefreshProducts) onRefreshProducts(samples);
   };
 
