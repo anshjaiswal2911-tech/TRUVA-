@@ -2,13 +2,73 @@ import { Product, Verdict, DetailedModule, KeyFinding, ModuleStatus, OcrItem } f
 
 const PRODUCTION_BACKEND_URL = 'https://truva-backend-jy4z.onrender.com';
 
+export async function resizeImageForInspection(fileOrBlob: File | Blob, maxDim = 800): Promise<Blob> {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return fileOrBlob;
+  }
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      const url = URL.createObjectURL(fileOrBlob);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width, height } = img;
+        if (width <= maxDim && height <= maxDim) {
+          resolve(fileOrBlob);
+          return;
+        }
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((b) => {
+            resolve(b || fileOrBlob);
+          }, 'image/jpeg', 0.88);
+        } else {
+          resolve(fileOrBlob);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(fileOrBlob);
+      };
+      img.src = url;
+    } catch {
+      resolve(fileOrBlob);
+    }
+  });
+}
+
 const getApiEndpoints = (): string[] => {
+  const isLocal = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+  );
+
   const envUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '');
   const list: string[] = [];
-  if (envUrl) list.push(`${envUrl}/api/inspect`);
-  list.push(`${PRODUCTION_BACKEND_URL}/api/inspect`);
-  list.push('/api/inspect');
-  list.push('http://localhost:8000/api/inspect');
+
+  if (isLocal) {
+    if (envUrl) list.push(`${envUrl}/api/inspect`);
+    list.push('http://localhost:8000/api/inspect');
+    list.push('/api/inspect');
+    list.push(`${PRODUCTION_BACKEND_URL}/api/inspect`);
+  } else {
+    // In live production (e.g. Vercel or mobile device):
+    list.push(`${PRODUCTION_BACKEND_URL}/api/inspect`);
+    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+      list.push(`${envUrl}/api/inspect`);
+    }
+  }
   return Array.from(new Set(list));
 };
 
@@ -43,19 +103,18 @@ export async function inspectProductImage(
   fileOrBlob: File | Blob,
   imagePreviewUrl?: string
 ): Promise<{ product: Product; rawResponse: any }> {
+  // Compress and resize image to max 800px for lightning-fast cloud upload & 1.5s RapidOCR processing
+  const optimizedBlob = await resizeImageForInspection(fileOrBlob, 800);
   const endpoints = getApiEndpoints();
   let lastError: any = null;
 
   for (const endpoint of endpoints) {
     const formData = new FormData();
-    if (fileOrBlob instanceof File) {
-      formData.append('image', fileOrBlob, fileOrBlob.name);
-    } else {
-      formData.append('image', fileOrBlob, 'captured_label.jpg');
-    }
+    const fileName = fileOrBlob instanceof File ? fileOrBlob.name : 'captured_label.jpg';
+    formData.append('image', optimizedBlob, fileName);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000); // 12s max per endpoint attempt
+    const timeout = setTimeout(() => controller.abort(), 16000); // 16s timeout per endpoint attempt
 
     try {
       const response = await fetch(endpoint, {

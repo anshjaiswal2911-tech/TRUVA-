@@ -72,6 +72,11 @@ function TruvaApp() {
     return () => window.removeEventListener('hashchange', handleUrlRoute);
   }, []);
 
+  useEffect(() => {
+    // Proactively wake up cloud inspection backend on app load
+    fetch('https://truva-backend-jy4z.onrender.com/api/health').catch(() => {});
+  }, []);
+
   // Compute unique identity string for personal isolated scan history
   const currentUserId = useMemo(() => {
     return user?.id || profile?.id || profile?.email || (isAuthenticated ? 'authenticated_user' : 'guest');

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Product, ScanProgressStep } from '../types';
 import { triggerScanSuccessHaptic } from '../services/haptics';
 import { inspectProductImage } from '../services/apiService';
+import { analyzePackagingWithClientOcr } from '../services/clientOcrService';
 
 interface ProcessingScreenProps {
   product: Product;
@@ -473,13 +474,27 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({
       }
     }, 180);
 
-    // Execute real backend OCR & Compliance Inspection
+    // Execute real backend OCR & on-device client OCR pipeline
     const runInspection = async () => {
       try {
         let finalProduct: Product;
         if (fileBlob) {
-          const { product: realProduct } = await inspectProductImage(fileBlob, customImage);
-          finalProduct = realProduct;
+          try {
+            const { product: realProduct } = await inspectProductImage(fileBlob, customImage);
+            if (
+              realProduct &&
+              realProduct.name &&
+              realProduct.name !== 'Packaged Commodity' &&
+              realProduct.name !== 'Pre-Packaged Commodity'
+            ) {
+              finalProduct = realProduct;
+            } else {
+              finalProduct = await analyzePackagingWithClientOcr(fileBlob, customImage || '');
+            }
+          } catch (apiErr) {
+            console.warn('[Inspection] Cloud API note, running on-device OCR:', apiErr);
+            finalProduct = await analyzePackagingWithClientOcr(fileBlob, customImage || '');
+          }
         } else {
           finalProduct = buildAnalyzedFallbackProduct(fileBlob, customImage, product);
         }
@@ -496,8 +511,18 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({
           }
         }, 300);
       } catch (err) {
-        console.warn('Backend inspect note (using local high-fidelity FMCG profile):', err);
+        console.warn('Inspection note, ensuring accurate analysis:', err);
         if (cancelled) return;
+        let fallbackP: Product;
+        if (fileBlob) {
+          try {
+            fallbackP = await analyzePackagingWithClientOcr(fileBlob, customImage || '');
+          } catch {
+            fallbackP = buildAnalyzedFallbackProduct(fileBlob, customImage, product);
+          }
+        } else {
+          fallbackP = buildAnalyzedFallbackProduct(fileBlob, customImage, product);
+        }
         hasCompletedRef.current = true;
         clearInterval(interval);
         setProgress(100);
@@ -505,7 +530,6 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({
 
         setTimeout(() => {
           if (!cancelled) {
-            const fallbackP = buildAnalyzedFallbackProduct(fileBlob, customImage, product);
             onComplete(fallbackP);
           }
         }, 300);

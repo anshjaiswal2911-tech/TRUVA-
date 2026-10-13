@@ -443,8 +443,8 @@ def run_ocr(image_path: str,
         if img_bgr is not None:
             h, w = img_bgr.shape[:2]
             max_dim = max(h, w)
-            if max_dim > 1600:
-                scale = 1600.0 / max_dim
+            if max_dim > 800:
+                scale = 800.0 / max_dim
                 new_w, new_h = int(w * scale), int(h * scale)
                 resized_img = cv2.resize(img_bgr, (new_w, new_h), interpolation=cv2.INTER_AREA)
                 cv2.imwrite(image_path, resized_img, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
