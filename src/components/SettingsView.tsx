@@ -10,8 +10,6 @@ import {
 } from '../services/haptics';
 import { Product } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { hasGeminiApiKey } from '../services/geminiVisionService';
-import { GeminiApiKeyModal } from './GeminiApiKeyModal';
 
 interface SettingsViewProps {
   onSignOut: () => void;
@@ -186,34 +184,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onSignOut, userId, o
         <div className="w-full lg:col-span-7 flex flex-col gap-6">
           {/* Settings List Grouped */}
           <section className="bg-white border border-[#bfc9c1]/80 rounded-2xl divide-y divide-[#bfc9c1]/40 overflow-hidden shadow-[0px_2px_8px_rgba(0,0,0,0.02)]">
-            {/* AI Vision Engine (Gemini) */}
-            <button
-              onClick={() => setActiveModal('gemini_vision')}
-              className="w-full flex items-center justify-between p-4 md:p-5 hover:bg-[#f2f4f0]/80 transition-colors group cursor-pointer text-left"
-            >
-              <div className="flex items-center gap-4 text-[#191c1a]">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <span className="material-symbols-outlined text-[20px]">visibility</span>
-                </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm md:text-base font-bold text-[#191c1a]">AI Vision Scanner (Gemini)</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                      hasGeminiApiKey() ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'
-                    }`}>
-                      {hasGeminiApiKey() ? 'Active' : 'Setup Key'}
-                    </span>
-                  </div>
-                  <span className="text-xs text-[#707973]">
-                    Direct multimodal neural inspection for 100% accurate live packaging audits
-                  </span>
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-[#bfc9c1] group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all">
-                chevron_right
-              </span>
-            </button>
-
             {/* Offline Storage Cache */}
             <button
               onClick={() => {
@@ -504,11 +474,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onSignOut, userId, o
         </div>
       )}
 
-      {/* Gemini Vision API Key Settings Modal */}
-      <GeminiApiKeyModal
-        isOpen={activeModal === 'gemini_vision'}
-        onClose={() => setActiveModal(null)}
-      />
     </div>
   );
 };

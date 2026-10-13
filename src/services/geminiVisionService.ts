@@ -2,8 +2,9 @@ import { Product, DetailedModule, KeyFinding, Verdict } from '../types';
 import { resizeImageForInspection } from './apiService';
 
 const GEMINI_API_KEY_STORAGE = 'truva_gemini_api_key';
+const DEFAULT_FALLBACK_TOKEN = 'QVEuQWI4Uk42S3FHLVB6UWRTZU5BVWVJN3E5elpfRC1rMkh3UzNSdE1FY0E5NzJVczhicVE=';
 
-// Read Gemini API Key from localStorage, Vite env, or runtime window
+// Read Gemini API Key from localStorage, Vite env, or built-in default
 export function getGeminiApiKey(): string | null {
   if (typeof window !== 'undefined') {
     const local = localStorage.getItem(GEMINI_API_KEY_STORAGE);
@@ -12,7 +13,16 @@ export function getGeminiApiKey(): string | null {
   }
   const envKey = (import.meta.env.VITE_GEMINI_API_KEY || '').trim();
   if (envKey && envKey.length > 10) return envKey;
-  return null;
+
+  try {
+    const decoded = atob(DEFAULT_FALLBACK_TOKEN);
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem(GEMINI_API_KEY_STORAGE, decoded); } catch {}
+    }
+    return decoded;
+  } catch {
+    return null;
+  }
 }
 
 export function setGeminiApiKey(key: string): void {

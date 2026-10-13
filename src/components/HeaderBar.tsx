@@ -13,7 +13,6 @@ interface HeaderBarProps {
   isOffline?: boolean;
   isMobileMode?: boolean;
   onSignOut?: () => void;
-  onOpenGeminiSettings?: () => void;
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -26,7 +25,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   isOffline = false,
   isMobileMode = false,
   onSignOut,
-  onOpenGeminiSettings,
 }) => {
   const { profile, isInspector, isAuthenticated, signOut, switchRoleDemo } = useAuth();
 
@@ -193,21 +191,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
         {/* Right Actions: Clean and Compact on Mobile */}
         <div className="flex items-center gap-1.5 sm:gap-3">
-          {/* TRUVA AI Vision Engine Badge / Trigger */}
-          {onOpenGeminiSettings && (
-            <button
-              onClick={() => {
-                triggerTabHaptic();
-                onOpenGeminiSettings();
-              }}
-              className="flex items-center gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl border border-blue-200 bg-blue-50/80 hover:bg-blue-100 text-blue-700 text-[11px] sm:text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer"
-              title="TRUVA AI Vision Scanner (Gemini Multimodal Vision)"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="material-symbols-outlined text-[16px]">visibility</span>
-              <span className="hidden xs:inline">Vision AI</span>
-            </button>
-          )}
+
 
           {/* Primary Action Button (Desktop Only) */}
           {!isMobileMode && (

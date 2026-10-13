@@ -3,13 +3,11 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Product } from '../types';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import { triggerSelectionHaptic, triggerHaptic } from '../services/haptics';
-import { hasGeminiApiKey } from '../services/geminiVisionService';
 
 interface NewInspectionViewProps {
   onStartScan: (product: Product, customImage?: string, fileBlob?: File | Blob) => void;
   onSelectProduct?: (product: Product) => void;
   isMobileMode?: boolean;
-  onOpenGeminiSettings?: () => void;
 }
 
 function createPendingProduct(imageUrl?: string): Product {
@@ -81,9 +79,7 @@ export const NewInspectionView: React.FC<NewInspectionViewProps> = ({
   onStartScan,
   onSelectProduct,
   isMobileMode = false,
-  onOpenGeminiSettings,
 }) => {
-  const isGeminiActive = hasGeminiApiKey();
   const [dragActive, setDragActive] = useState(false);
   const [useCamera, setUseCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -217,32 +213,9 @@ export const NewInspectionView: React.FC<NewInspectionViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap justify-center lg:justify-end">
-            {onOpenGeminiSettings && (
-              <button
-                type="button"
-                onClick={() => {
-                  triggerSelectionHaptic();
-                  onOpenGeminiSettings();
-                }}
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-tight shrink-0 shadow-2xs border transition-all active:scale-95 cursor-pointer ${
-                  isGeminiActive
-                    ? 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100'
-                    : 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
-                }`}
-                title="Click to configure Google Gemini Multimodal Vision API key"
-              >
-                <span className={`w-2 h-2 rounded-full ${isGeminiActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                <span className="material-symbols-outlined text-[15px]">visibility</span>
-                <span>{isGeminiActive ? 'Gemini Vision Active' : 'Setup Gemini Vision'}</span>
-                <span className="material-symbols-outlined text-[13px] opacity-60">settings</span>
-              </button>
-            )}
-
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#dcfce7] border border-[#95d4b3] text-[#0f5238] text-[10px] sm:text-[11px] font-bold uppercase tracking-wider shrink-0 shadow-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0f5238] animate-pulse"></span>
-              Legal Metrology Rule 6 Ingestion
-            </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#dcfce7] border border-[#95d4b3] text-[#0f5238] text-[10px] sm:text-[11px] font-bold uppercase tracking-wider shrink-0 shadow-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0f5238] animate-pulse"></span>
+            Legal Metrology Rule 6 Ingestion
           </div>
         </div>
 
