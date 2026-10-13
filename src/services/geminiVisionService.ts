@@ -38,27 +38,33 @@ export async function testGeminiApiKey(customKey?: string): Promise<{ success: b
     return { success: false, message: 'No Gemini API key provided.' };
   }
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-  try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: 'Respond with JSON: {"status": "ok"}' }] }],
-        generationConfig: { response_mime_type: 'application/json' },
-      }),
-    });
+  const testModels = ['gemini-3.6-flash', 'gemini-3.1-flash-lite', 'gemini-3.7-flash', 'gemini-1.5-flash'];
+  let lastErrorMsg = '';
 
-    if (!res.ok) {
+  for (const model of testModels) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: 'Respond with JSON: {"status": "ok"}' }] }],
+          generationConfig: { response_mime_type: 'application/json' },
+        }),
+      });
+
+      if (res.ok) {
+        return { success: true, message: `Gemini Vision AI key is active and verified (${model})!` };
+      }
+
       const errData = await res.json().catch(() => null);
-      const errMsg = errData?.error?.message || `HTTP ${res.status}`;
-      return { success: false, message: `API Key validation failed: ${errMsg}` };
+      lastErrorMsg = errData?.error?.message || `HTTP ${res.status}`;
+    } catch (err: any) {
+      lastErrorMsg = err.message || String(err);
     }
-
-    return { success: true, message: 'Gemini Vision API key is valid and ready for live packaging inspection!' };
-  } catch (err: any) {
-    return { success: false, message: `Connection error: ${err.message || err}` };
   }
+
+  return { success: false, message: `API Key validation failed: ${lastErrorMsg}` };
 }
 
 /**
@@ -199,7 +205,15 @@ export async function analyzePackagingWithGeminiVision(
   const cleanBase64 = dataUrl.replace(/^data:image\/\w+;base64,/, '');
   const mimeType = optimizedBlob.type || 'image/jpeg';
 
-  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash'];
+  const models = [
+    'gemini-3.6-flash',
+    'gemini-3.1-flash-lite',
+    'gemini-3.7-flash',
+    'gemini-3.8-flash',
+    'gemini-flash-latest',
+    'gemini-2.5-flash-lite',
+    'gemini-1.5-flash',
+  ];
   let lastError: any = null;
   let parsedData: GeminiExtractionResponse | null = null;
 
