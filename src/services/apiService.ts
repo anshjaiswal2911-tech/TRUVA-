@@ -200,73 +200,57 @@ export function transformBackendResponseToProduct(
 
   // Smart FMCG and Commodity Metrology Resolver
   const pUpper = (pName + ' ' + (brand || '')).toUpperCase();
-  let defaultMrp = '₹20.00 (Incl. of all taxes)';
-  let defaultQty = '50 g';
+  let defaultMrp = 'Declared on packaging label';
+  let defaultQty = 'Declared on packaging label';
   let defaultMfg = 'Authorized FMCG Packaged Goods Manufacturer';
 
   if (pUpper.includes('MAGGI') || pUpper.includes('NOODLE')) {
-    defaultMrp = '₹14.00 (Incl. of all taxes)';
-    defaultQty = '70 g';
     defaultMfg = 'Nestlé India Limited';
     category = 'Packaged Foods';
-    if (pName === 'Packaged Commodity') pName = 'Maggi 2-Minute Masala Noodles';
-  } else if (pUpper.includes('CRUNCHEX') || pUpper.includes('BALAJI')) {
-    defaultMrp = '₹20.00 (Incl. of all taxes)';
-    defaultQty = '48 g';
+    if (pName === 'Packaged Commodity') pName = 'Maggi Instant Noodles';
+  } else if (pUpper.includes('BALAJI')) {
     defaultMfg = 'Balaji Wafers Private Limited';
     category = 'Packaged Snacks';
-    if (pName === 'Packaged Commodity') pName = 'Balaji Crunchex Potato Wafers';
+    if (pUpper.includes('RUMBLES')) {
+      pName = 'Balaji Rumbles Masala Crunch';
+    } else if (pUpper.includes('CRUNCHEX')) {
+      pName = 'Balaji Crunchex Potato Wafers';
+    } else if (pName === 'Packaged Commodity') {
+      pName = 'Balaji Wafers & Snacks';
+    }
   } else if (pUpper.includes('LAY') || pUpper.includes('KURKURE') || pUpper.includes('CHIP')) {
-    defaultMrp = '₹20.00 (Incl. of all taxes)';
-    defaultQty = '50 g';
     defaultMfg = 'PepsiCo India Holdings Pvt. Ltd.';
     category = 'Packaged Snacks';
-    if (pName === 'Packaged Commodity') pName = "Lay's Classic Potato Chips";
+    if (pName === 'Packaged Commodity') pName = pUpper.includes('KURKURE') ? 'Kurkure Namkeen' : "Lay's Potato Chips";
   } else if (pUpper.includes('TATA') && (pUpper.includes('SALT') || pUpper.includes('NAMAK'))) {
-    defaultMrp = '₹28.00 (Incl. of all taxes)';
-    defaultQty = '1 kg';
     defaultMfg = 'Tata Consumer Products Limited';
     category = 'Food & Spices';
-    if (pName === 'Packaged Commodity') pName = 'Tata Salt Vacuum Evaporated Iodized Salt';
+    if (pName === 'Packaged Commodity') pName = 'Tata Salt Iodized';
   } else if (pUpper.includes('FROOTI') || pUpper.includes('MANGO') || pUpper.includes('JUICE')) {
-    defaultMrp = '₹20.00 (Incl. of all taxes)';
-    defaultQty = '160 ml';
     defaultMfg = 'Parle Agro Pvt. Ltd.';
     category = 'Beverages';
-    if (pName === 'Packaged Commodity') pName = 'Frooti Fresh Mango Drink';
+    if (pName === 'Packaged Commodity') pName = 'Frooti Mango Drink';
   } else if (pUpper.includes('THUMS') || pUpper.includes('COLA') || pUpper.includes('SPRITE') || pUpper.includes('PEPSI')) {
-    defaultMrp = '₹40.00 (Incl. of all taxes)';
-    defaultQty = '750 ml';
     defaultMfg = 'Hindustan Coca-Cola Beverages Pvt. Ltd.';
     category = 'Beverages';
-    if (pName === 'Packaged Commodity') pName = 'Thums Up Carbonated Drink';
+    if (pName === 'Packaged Commodity') pName = 'Carbonated Soft Drink';
   } else if (pUpper.includes('AASHIRVAAD') || pUpper.includes('ATTA') || pUpper.includes('FLOUR')) {
-    defaultMrp = '₹245.00 (Incl. of all taxes)';
-    defaultQty = '5 kg';
     defaultMfg = 'ITC Limited';
     category = 'Staples & Grains';
-    if (pName === 'Packaged Commodity') pName = 'Aashirvaad Shudh Chakki Atta';
+    if (pName === 'Packaged Commodity') pName = 'Aashirvaad Atta';
   } else if (pUpper.includes('SAFFOLA') || pUpper.includes('FORTUNE') || pUpper.includes('OIL')) {
-    defaultMrp = '₹195.00 (Incl. of all taxes)';
-    defaultQty = '1 L';
     defaultMfg = 'Marico Limited';
     category = 'Edible Oils';
-    if (pName === 'Packaged Commodity') pName = 'Saffola Gold Blended Edible Oil';
+    if (pName === 'Packaged Commodity') pName = 'Edible Oil';
   } else if (pUpper.includes('AMUL') || pUpper.includes('MILK') || pUpper.includes('BUTTER')) {
-    defaultMrp = '₹58.00 (Incl. of all taxes)';
-    defaultQty = '500 g';
     defaultMfg = 'Gujarat Cooperative Milk Marketing Federation Ltd. (AMUL)';
     category = 'Dairy Products';
-    if (pName === 'Packaged Commodity') pName = 'Amul Pasteurized Butter';
+    if (pName === 'Packaged Commodity') pName = 'Amul Dairy Product';
   } else if (pUpper.includes('PARLE') || pUpper.includes('BISCUIT') || pUpper.includes('COOKIE') || pUpper.includes('BRITANNIA')) {
-    defaultMrp = '₹10.00 (Incl. of all taxes)';
-    defaultQty = '65 g';
     defaultMfg = 'Parle Products Private Limited';
     category = 'Bakery & Biscuits';
-    if (pName === 'Packaged Commodity') pName = 'Parle-G Original Glucose Biscuits';
+    if (pName === 'Packaged Commodity') pName = 'Packaged Biscuits';
   } else if (pUpper.includes('CADBURY') || pUpper.includes('DAIRY MILK') || pUpper.includes('CHOCOLATE')) {
-    defaultMrp = '₹45.00 (Incl. of all taxes)';
-    defaultQty = '50 g';
     defaultMfg = 'Mondelez India Foods Private Limited';
     category = 'Confectionery';
     if (pName === 'Packaged Commodity') pName = 'Cadbury Dairy Milk Chocolate';

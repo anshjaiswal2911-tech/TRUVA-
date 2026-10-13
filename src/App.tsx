@@ -19,6 +19,7 @@ import { SystemStatesView } from './components/SystemStatesView';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LandingPage } from './components/LandingPage';
 import { AuthGateModal } from './components/AuthGateModal';
+import { GeminiApiKeyModal } from './components/GeminiApiKeyModal';
 
 type ViewMode = 'main' | 'processing' | 'result' | 'full_report' | 'evidence_detail';
 
@@ -90,6 +91,7 @@ function TruvaApp() {
   });
   const [customImage, setCustomImage] = useState<string | undefined>(undefined);
   const [customFileBlob, setCustomFileBlob] = useState<File | Blob | undefined>(undefined);
+  const [showGeminiModal, setShowGeminiModal] = useState(false);
 
   // Network offline state detection and simulation
   const { isOffline, isSimulatedOffline, toggleSimulatedOffline } = useNetworkStatus();
@@ -352,6 +354,7 @@ function TruvaApp() {
         isOffline={isOffline}
         isMobileMode={isMobileMode || !isLargeScreen}
         onSignOut={handleMobileLogout}
+        onOpenGeminiSettings={() => setShowGeminiModal(true)}
       />
 
       {/* Main Content Area */}
@@ -461,6 +464,7 @@ function TruvaApp() {
               <NewInspectionView
                 onStartScan={handleStartScan}
                 isMobileMode={isMobileMode}
+                onOpenGeminiSettings={() => setShowGeminiModal(true)}
                 onSelectProduct={(product) => {
                   setSelectedProduct(product);
                   setViewMode('result');
@@ -566,6 +570,12 @@ function TruvaApp() {
           isMobileMode={isMobileMode && isLargeScreen}
         />
       )}
+
+      {/* Gemini Vision API Key Setup Modal */}
+      <GeminiApiKeyModal
+        isOpen={showGeminiModal}
+        onClose={() => setShowGeminiModal(false)}
+      />
     </div>
   );
 
