@@ -38,12 +38,15 @@ function TruvaApp() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [showAuthModal, setShowAuthModal] = useState(false);
-  // Check if Mobile App mode is requested via URL (?app=true or ?view=mobile or #/mobile)
+  // Check if Mobile App mode is requested via URL, standalone PWA, or native mobile browser
   const [isMobileMode, setIsMobileMode] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     const params = new URLSearchParams(window.location.search);
     const hash = window.location.hash.toLowerCase();
-    return params.get('view') === 'mobile' || params.get('app') === 'true' || hash.includes('mobile') || hash.includes('app');
+    if (params.get('view') === 'desktop' || params.get('web') === 'true') return false;
+    const isStandalone = (window.navigator as any).standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    return params.get('view') === 'mobile' || params.get('app') === 'true' || hash.includes('mobile') || hash.includes('app') || isStandalone || isMobileDevice;
   });
 
   const handleMobileLogout = async () => {
